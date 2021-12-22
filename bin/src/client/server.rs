@@ -75,7 +75,7 @@ mod server_routes {
 
     #[get("/mempool")]
     pub async fn get_mempool(data: &State<SharedData<Data>>) -> Json<Vec<Transaction>> {
-        Json(data.read().await.new_transactions.transactions.clone())
+        Json(data.read().await.new_transactions.transactions.keys().cloned().collect())
     }
 
     #[post("/new-tx", data = "<tx>")]

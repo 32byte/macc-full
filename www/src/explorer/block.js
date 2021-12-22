@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useParams } from "react-router-dom";
 
-import getBlockchain from "../API";
+import api from "../API";
 
 function DisplayVIN(props) {
   return (
@@ -57,7 +57,7 @@ function BlockDisplay() {
   let [blockchain, setBlockchain] = useState(null);
   
   if (blockchain == null) {
-    getBlockchain(blockHeight, parseInt(blockHeight) + 1).then(res => res.json()).then(bc => setBlockchain(bc));
+    api.getBlockchain(blockHeight, parseInt(blockHeight) + 1).then(res => res.json()).then(bc => setBlockchain(bc));
 
     return <h1>Please wait for the blockchain to load..</h1>
   }

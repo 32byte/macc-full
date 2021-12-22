@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React from "react";
 import ReactDOM from "react-dom";
+import { CookiesProvider } from 'react-cookie';
 
 import App from "./App";
 
-const wasm = import("../build/macc_wasm");
-
-wasm.then(m => {
-  ReactDOM.render(<App wasm={m}/>, document.getElementById("root"));
-});
+ReactDOM.render(
+    (<CookiesProvider>
+        <App />
+    </CookiesProvider>),
+    document.getElementById("root")
+);

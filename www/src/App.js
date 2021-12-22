@@ -9,7 +9,7 @@ import Faucet from './Faucet';
 import Wallet from './Wallet';
 import React from "react";
 
-function App(props) {
+function App() {
   return (
     <div>
       <Router>

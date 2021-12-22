@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
 
-import getBlockchain from "../API";
+import api from "../API";
 
 function DisplayBlock(props) {
   let path = '/explorer/' + props.block['height'];
@@ -16,7 +16,7 @@ function BlockchainDisplay() {
   let [blockchain, setBlockchain] = useState(null);
   
   if (blockchain == null) {
-    getBlockchain().then(res => res.json()).then(bc => setBlockchain(bc));
+    api.getBlockchain().then(res => res.json()).then(bc => setBlockchain(bc));
 
     return <h1>Please wait for the blockchain to load..</h1>
   }
