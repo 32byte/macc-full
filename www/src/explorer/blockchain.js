@@ -4,10 +4,10 @@ import { Link } from "react-router-dom";
 import api from "../API";
 
 function DisplayBlock(props) {
-  let path = '/explorer/' + props.block['height'];
+  let path = '/' + props.block['height'];
   return (
     <div>
-      <Link to={path}>Block Nr: {props.block['height']} Transactions: {props.block['transactions'].length}</Link>
+      <Link className="block" to={path}>Block Nr: {props.block['height']} Transactions: {props.block['transactions'].length}</Link>
     </div>
   )
 }
@@ -18,7 +18,7 @@ function BlockchainDisplay() {
   if (blockchain == null) {
     api.getBlockchain().then(res => res.json()).then(bc => setBlockchain(bc));
 
-    return <h1>Please wait for the blockchain to load..</h1>
+    return <p className="info">Updating blockchain..</p>
   }
   
   let blocks = blockchain.reverse().map((block, index) =>
@@ -26,7 +26,7 @@ function BlockchainDisplay() {
   );
 
   return (
-    <div>
+    <div className="content">
       <h1>Blockchain explorer</h1>
       {blocks}
     </div>

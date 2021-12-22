@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 
-import Header from "./Header";
-
 import api from './API';
 
 function Receive(props) {
@@ -19,7 +17,7 @@ function Receive(props) {
 
     let req = api.send(macc, JSON.stringify(props.mine), props.balance, 1000, address, 'miner1', 'miner1', 0);
 
-    req.then(res => console.log(res));
+    req.then(_ => alert("1cc sent!"));
   };
 
   return (
@@ -35,20 +33,15 @@ function Faucet() {
   
   if (stuff === null) {
     import("../build/macc_wasm").then(macc => {
-      // api.getBlockchain().then(res => res.json()).then(blockchain => {
-      //   let txs = api.parseBlockchain(blockchain, macc.hash_tx);
-      //   setTXS(txs);
-      // });
       api.getTxStore().then(res => res.json()).then(txs => {
         setStuff(api.getMyUTXOs(macc, JSON.stringify(txs), "miner1"));
       });
     })
-    return <p>Updating blockchain..</p>;
+    return <p className="info">Updating blockchain..</p>;
   }
 
   return (
-    <div>
-      <Header />
+    <div className="content">
       <h1>Faucet has currently {stuff.bal/1000}cc!</h1>
       <Receive balance={stuff.bal} mine={stuff.mine}/>
     </div>

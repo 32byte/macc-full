@@ -8,14 +8,19 @@ import Explorer from './Explorer';
 import Faucet from './Faucet';
 import Wallet from './Wallet';
 import React from "react";
+import Header from "./Header";
+import BlockchainDisplay from './explorer/blockchain';
+import BlockDisplay from './explorer/block';
+
 
 function App() {
   return (
     <div>
       <Router>
+        <Header />
         <Switch>
           <Route path="/explorer">
-            <Explorer />
+            <BlockchainDisplay />
           </Route>
           <Route path="/faucet">
             <Faucet />
@@ -23,8 +28,11 @@ function App() {
           <Route path="/wallet">
             <Wallet />
           </Route>
+          <Route path="/:blockHeight">
+            <BlockDisplay />
+          </Route>
           <Route path="/">
-            <Explorer />
+            <BlockchainDisplay />
           </Route>
         </Switch>
       </Router>

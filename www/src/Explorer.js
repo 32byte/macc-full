@@ -7,23 +7,19 @@ import {
 
 import BlockchainDisplay from './explorer/blockchain';
 import BlockDisplay from './explorer/block';
-import Header from './Header';
 
 function Explorer() {
   let match = useRouteMatch();
 
   return (
-    <div>
-      <Header/>
-      <Switch>
-        <Route path={`${match.path}/:blockHeight`}>
-          <BlockDisplay />
-        </Route>
-        <Route path={match.path}>
-          <BlockchainDisplay />
-        </Route>
-      </Switch>
-    </div>
+    <Switch>
+      <Route path={`${match.path}/:blockHeight`}>
+        <BlockDisplay />
+      </Route>
+      <Route path={match.path}>
+        <BlockchainDisplay />
+      </Route>
+    </Switch>
   );
 }
 

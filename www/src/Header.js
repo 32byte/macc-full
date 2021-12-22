@@ -3,18 +3,10 @@ import { Link } from "react-router-dom";
 
 function Header() {
 	return (
-		<div>
-			<ul>
-				<li>
-					<Link to="/">Explorer</Link>
-				</li>
-				<li>
-					<Link to="/faucet">Faucet</Link>
-				</li>
-				<li>
-					<Link to="/wallet">Wallet</Link>
-				</li>
-			</ul>
+		<div id="heading">
+			<Link className="link" to="/explorer">Explorer</Link>
+			<Link className="link" to="/faucet">Faucet</Link>
+			<Link className="link" to="/wallet">Wallet</Link>
 		</div>
 	);
 }

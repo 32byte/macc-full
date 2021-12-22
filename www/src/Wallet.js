@@ -13,7 +13,7 @@ function WalletData(props) {
         setStuff({data: api.getMyUTXOs(macc, JSON.stringify(txs), props.wallet), m: macc });
       });
     })
-    return <p>Updating blockchain..</p>;
+    return <p className="info">Updating blockchain..</p>;
   }
 
   const send = () => {
@@ -42,7 +42,7 @@ function WalletData(props) {
   )
 }
 
-function WalletBody() {
+function Wallet() {
   let [cookies, setCookie, removeCookie] = useCookies(['wallet']);
 
   const setWallet = () => {
@@ -63,19 +63,11 @@ function WalletBody() {
   }
 
   return (
-    <div>
-      <h1>Wallet here {cookies.wallet}!</h1>
+    <div className="content">
+      <h1>Wallet</h1>
+      <p id="address">Your address: {cookies.wallet}</p>
       <WalletData wallet={cookies.wallet}/>
-      <button onClick={deleteWallet}>Log out</button>
-    </div>
-  )
-}
-
-function Wallet() {
-  return (
-    <div>
-      <Header/>
-      <WalletBody />
+      <button className="fancyBtn" onClick={deleteWallet}>Switch account</button>
     </div>
   )
 }
