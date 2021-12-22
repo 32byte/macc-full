@@ -1,10 +1,12 @@
 [package]
-name = "macc_lib"
+name = "macc_wasm"
 version = "0.1.0"
 edition = "2018"
 
 [lib]
+path = "rust-src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+macc_lib = { path = "../lib" }
 wasm-bindgen = "0.2"

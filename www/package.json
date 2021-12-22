@@ -1,20 +1,21 @@
 {
-  "name": "nexttt",
+  "name": "www",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "webpack server",
-    "build:wasm": "cargo build --target wasm32-unknown-unknown",
-    "build:bindgen": "wasm-bindgen target/wasm32-unknown-unknown/debug/macc_lib.wasm --out-dir build",
-    "build": "npm run build:wasm && npm run build:bindgen && npx webpack"
+    "start": "webpack server",
+    "build:wasm": "cargo build --target wasm32-unknown-unknown --release",
+    "build:bindgen": "wasm-bindgen target/wasm32-unknown-unknown/release/macc_wasm.wasm --out-dir build",
+    "dev": "npm run build:wasm && npm run build:bindgen && npm run start"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react-dom": "^17.0.2",
+    "react-router-dom": "^5.2.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.16.4",
@@ -22,6 +23,7 @@
     "@wasm-tool/wasm-pack-plugin": "^1.6.0",
     "babel-core": "^6.26.3",
     "babel-loader": "^8.2.3",
+    "babel-plugin-transform-runtime": "^6.23.0",
     "html-webpack-plugin": "^5.5.0",
     "webpack": "^5.64.2",
     "webpack-cli": "^4.9.1",
