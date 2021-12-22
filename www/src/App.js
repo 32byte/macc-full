@@ -12,8 +12,6 @@ import React from "react";
 function App(props) {
   return (
     <div>
-      <h1>Hello</h1>
-      
       <Router>
         <Switch>
           <Route path="/explorer">
@@ -24,6 +22,9 @@ function App(props) {
           </Route>
           <Route path="/wallet">
             <Wallet />
+          </Route>
+          <Route path="/">
+            <Explorer />
           </Route>
         </Switch>
       </Router>
