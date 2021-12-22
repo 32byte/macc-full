@@ -1,0 +1,7 @@
+/testing
+/target
+/.vscode
+/.env
+
+/*.bin
+/*.json
