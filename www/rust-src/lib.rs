@@ -6,10 +6,10 @@ use macc_lib::blockchain::{
     transaction::{Transaction, UTXO, UTXOU},
     txstore::TxStore,
 };
-use macc_lib::ecdsa::AsPublicAddress;
+use macc_lib::ecdsa;
 use secp256k1::{
     bitcoin_hashes::hex::{FromHex, ToHex},
-    SecretKey, PublicKey, Secp256k1,
+    PublicKey, Secp256k1,
 };
 
 #[wasm_bindgen]
@@ -57,27 +57,19 @@ pub fn get_send_body(
     my_addr: &str,
     fee: u32,
 ) -> Option<String> {
-    // try to parse secret-key
-    let sk = if let Ok(s) = SecretKey::from_slice(&if let Ok(data) = Vec::from_hex(secret_key) {
-        data
-    } else {
-        alert("Invalid secret key hex!");
-        return None;
-    }) {
-        s
-    } else {
-        alert("Invalid secret key!");
-        return None;
-    };
-
     // check balance
     if bal < amount {
-        alert("Not enough balance!");
         return None;
     }
 
+    // try to parse secret-key
+    let sk = match ecdsa::sk_from_hex(secret_key) {
+        Some(s) => s,
+        None => return None,
+    };
+    let secp = Secp256k1::new();
+    
     let mut mine: TxStore = serde_json::from_str(mine).unwrap();
-
     let mut sending: u32 = 0;
     let mut vin: Vec<UTXOU> = Vec::new();
     let mut vout: Vec<UTXO> = Vec::new();
@@ -91,9 +83,9 @@ pub fn get_send_body(
         sending += utxo.value as u32;
         bal -= utxo.value as u32;
 
-        let utxou = UTXOU::new(tx_hash.clone(), *index, "".to_string());
-        let solution = macc_lib::ecdsa::create_solution(sk, &utxou);
-        let utxou = UTXOU::new(tx_hash.clone(), *index, solution);
+        let mut utxou = UTXOU::new(tx_hash.clone(), *index, "".to_string());
+        let solution = ecdsa::create_solution(&secp, sk, &utxou);
+        utxou.solution = solution;
 
         vin.push(utxou);
 
@@ -103,12 +95,12 @@ pub fn get_send_body(
         }
     }
 
-    vout.push(UTXO::new(amount as u128, macc_lib::ecdsa::create_lock(receiver)));
+    vout.push(UTXO::new(amount as u128, ecdsa::create_lock(receiver)));
 
     if amount + fee < sending {
         vout.push(UTXO::new(
             (sending - amount - fee) as u128,
-            macc_lib::ecdsa::create_lock(my_addr),
+            ecdsa::create_lock(my_addr),
         ));
     }
 
@@ -119,48 +111,36 @@ pub fn get_send_body(
 
 #[wasm_bindgen]
 pub fn get_address(pk: &str) -> Option<String> {
-    if let Ok(addr) = pk.to_string().as_address() {
-        return Some(addr);
+    if let Ok(bytes) = Vec::from_hex(pk) {
+        return Some(ecdsa::pk_to_address(&bytes));
     } 
     None
 }
 
 #[wasm_bindgen]
-pub fn get_public_key(sk: &str) -> Option<String> {
-    let sk_bytes = if let Ok(b) = Vec::from_hex(sk) {
-        b
-    } else {
-        return None;
-    };
-
-    if let Ok(sk) = SecretKey::from_slice(&sk_bytes) {
-        return Some(PublicKey::from_secret_key(&Secp256k1::new(), &sk).to_hex());
+pub fn get_public_key(secret_key: &str) -> Option<String> {
+    match ecdsa::sk_from_hex(secret_key) {
+        Some(s) => Some(PublicKey::from_secret_key(&Secp256k1::new(), &s).to_hex()),
+        None => return None,
     }
-    None
 }
 
 #[wasm_bindgen]
 pub fn generate_lock(addr: &str) -> String {
-    macc_lib::ecdsa::create_lock(addr)
+    ecdsa::create_lock(addr)
 }
 
 #[wasm_bindgen]
-pub fn generate_solution(sk: &str, utxou: &str) -> Option<String> {
-    let sk = if let Ok(s) = SecretKey::from_slice(&if let Ok(data) = Vec::from_hex(&sk) {
-        data
-    } else {
-        return None;
-    }) {
-        s
-    } else {
-        return None;
+pub fn generate_solution(secret_key: &str, utxou: &str) -> Option<String> {
+    let sk = match ecdsa::sk_from_hex(secret_key) {
+        Some(s) => s,
+        None => return None,
     };
 
-    let utxou: UTXOU = if let Ok(u) = serde_json::from_str(utxou) {
-        u
-    } else {
-        return None;
+    let utxou: UTXOU = match serde_json::from_str(utxou) {
+        Ok(u) => u,
+        Err(_) => return None,
     };
 
-    Some(macc_lib::ecdsa::create_solution(sk, &utxou))
+    Some(ecdsa::create_solution(&Secp256k1::new(), sk, &utxou))
 }

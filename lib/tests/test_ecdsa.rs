@@ -3,26 +3,25 @@ extern crate secp256k1;
 
 #[cfg(test)]
 mod tests {
-    use macc_lib::{ecdsa::AsPublicAddress, blockchain::transaction::UTXOU};
-    use secp256k1::{SecretKey, PublicKey, bitcoin_hashes::hex::{ToHex}};
+    use macc_lib::{blockchain::transaction::UTXOU, ecdsa};
+    use secp256k1::{bitcoin_hashes::hex::ToHex, rand::rngs::OsRng, PublicKey, SecretKey};
 
     #[test]
     fn test_with_script() {
         let utxou = UTXOU::new([0; 32], 0, String::new());
-
         let secp = secp256k1::Secp256k1::new();
+        let mut rng = OsRng::new().unwrap();
 
-        let rng = &mut secp256k1::rand::rngs::OsRng::new().unwrap();
-
-        let secret: SecretKey = macc_lib::ecdsa::new_secret_key(rng);
+        let secret: SecretKey = SecretKey::new(&mut rng);
         let public: PublicKey = PublicKey::from_secret_key(&secp, &secret);
 
-        let addr = public.as_address().unwrap();
-
+        let addr = ecdsa::pk_to_address(&public.serialize().to_vec());
         let lock = macc_lib::ecdsa::create_lock(&addr);
+        let solution = ecdsa::create_solution(&secp, secret, &utxou);
 
-        let solution = macc_lib::ecdsa::create_solution(secret, &utxou);
-
-        assert!(macc_lib::script::eval(format!("{} {} {}", solution, utxou.hash().to_hex(), lock)).is_some());
+        assert!(
+            macc_lib::script::eval(format!("{} {} {}", solution, utxou.hash().to_hex(), lock))
+                .is_some()
+        );
     }
 }

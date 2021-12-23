@@ -1,36 +1,6 @@
-use secp256k1::{
-    bitcoin_hashes::hex::{FromHex},
-    Message, PublicKey, Secp256k1, Signature,
-};
+use secp256k1::{bitcoin_hashes::hex::{FromHex}, Secp256k1};
 
-use crate::ecdsa::AsPublicAddress;
-
-fn to_addr(stack: &mut Vec<String>) -> bool {
-    let pk = match stack.pop() {
-        Some(x) => x,
-        None => return false,
-    };
-
-    let pk_bytes = match Vec::from_hex(&pk) {
-        Ok(x) => x,
-        Err(_) => return false,
-    };
-
-    let pub_key: PublicKey = if let Ok(p) = PublicKey::from_slice(&pk_bytes) {
-        p
-    } else {
-        return false;
-    };
-
-    let addr = if let Ok(a) = pub_key.as_address() {
-        a
-    } else {
-        return false;
-    };
-
-    stack.push(addr);
-    true
-}
+use crate::ecdsa;
 
 fn op_eq(stack: &mut Vec<String>) -> bool {
     let val1 = match stack.pop() {
@@ -46,50 +16,51 @@ fn op_eq(stack: &mut Vec<String>) -> bool {
     val1 == val2
 }
 
-fn verify_signature(stack: &mut Vec<String>) -> bool {
-    let utxo_hash = match stack.pop() {
-        Some(x) => x,
-        None => return false,
-    };
-
-    let sign = match stack.pop() {
-        Some(x) => x,
-        None => return false,
-    };
-
+fn to_addr(stack: &mut Vec<String>) -> bool {
     let pub_key = match stack.pop() {
         Some(x) => x,
         None => return false,
     };
 
-    let utxo_hash: secp256k1::bitcoin_hashes::sha256::Hash = secp256k1::bitcoin_hashes::Hash::hash(&if let Ok(data) = Vec::from_hex(&utxo_hash) {
-        data
-    } else {
-        return false;
-    });
-    
-    let msg = Message::from(utxo_hash);
-    
-    let sig = if let Ok(m) = Signature::from_der(&if let Ok(data) = Vec::from_hex(&sign) {
-        data
-    } else {
-        return false;
-    }) {
-        m
-    } else {
-        return false;
+    let pk_bytes = match Vec::from_hex(&pub_key) {
+        Ok(p) => p,
+        Err(_) => return false,
     };
 
-    let pk = if let Ok(m) = PublicKey::from_slice(&if let Ok(data) = Vec::from_hex(&pub_key) {
-        data
-    } else {
-        return false;
-    }) {
-        m
-    } else {
-        return false;
+    let addr = ecdsa::pk_to_address(&pk_bytes);
+
+    stack.push(addr);
+    true
+}
+
+fn verify_signature(stack: &mut Vec<String>) -> bool {
+    // pop data from stack
+    let msg = match stack.pop() {
+        Some(x) => x,
+        None => return false,
     };
-    
+    let sig = match stack.pop() {
+        Some(x) => x,
+        None => return false,
+    };
+    let pub_key = match stack.pop() {
+        Some(x) => x,
+        None => return false,
+    };
+
+    // parse data
+    let msg = match ecdsa::msg_from_hex(&msg) {
+        Some(m) => m,
+        None => return false,
+    };
+    let sig = match ecdsa::sig_from_hex(&sig) {
+        Some(s) => s,
+        None => return false,
+    };
+    let pk = match ecdsa::pk_from_hex(&pub_key) {
+        Some(p) => p,
+        None => return false,
+    };
 
     Secp256k1::new().verify(&msg, &sig, &pk).is_ok()
 }
@@ -116,7 +87,3 @@ pub fn eval(script: String) -> Option<Vec<String>> {
     }
     Some(stack)
 }
-
-/*
-example script: [pub_key (pub_key sign utxo_hash   {verify_sign)    to_addr addr eq]}
-*/

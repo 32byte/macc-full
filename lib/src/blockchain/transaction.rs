@@ -92,7 +92,14 @@ impl Transaction {
                 // check if UTXO with the index exists
                 if let Some(utxo) = utxos.get(&utxou.index) {
                     // validate script
-                    if script::eval(format!("{} {} {}", &utxou.solution, utxou.hash().to_vec().to_hex(), &utxo.lock)).is_none() {
+                    if script::eval(format!(
+                        "{} {} {}",
+                        &utxou.solution,
+                        utxou.hash().to_vec().to_hex(),
+                        &utxo.lock
+                    ))
+                    .is_none()
+                    {
                         log::debug!("Invalid script!");
                         return false;
                     }
