@@ -6,13 +6,13 @@ use super::{transaction::Transaction, txstore::TxStore};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct MemPool {
-    pub transactions: HashMap<Transaction, ()>
+    pub transactions: HashMap<Transaction, ()>,
 }
 
 impl MemPool {
     pub fn new() -> Self {
         MemPool {
-            transactions: HashMap::new()
+            transactions: HashMap::new(),
         }
     }
 

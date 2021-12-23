@@ -1,8 +1,29 @@
+use crate::blockchain::transaction::UTXOU;
 use crate::hashes;
 
 use secp256k1::bitcoin_hashes::hex;
 use secp256k1::bitcoin_hashes::hex::{FromHex, ToHex};
-use secp256k1::{All, PublicKey, Secp256k1, SecretKey};
+use secp256k1::{All, PublicKey, Secp256k1, SecretKey, Message};
+
+pub fn new_secret_key<R: secp256k1::rand::Rng + ?Sized>(rng: &mut R) -> SecretKey {
+    let (secret_key, _public_key) = Secp256k1::new().generate_keypair(rng);
+
+    secret_key
+}
+
+pub fn create_lock(addr: &str) -> String {
+    format!("verify_sign to_addr {} op_eq", addr)
+}
+
+pub fn create_solution(sk: SecretKey, utxou: &UTXOU) -> String {
+    let secp = secp256k1::Secp256k1::new();
+    let kp: PublicKey = PublicKey::from_secret_key(&secp, &sk);
+
+    let msg: Message = Message::from_hashed_data::<secp256k1::bitcoin_hashes::sha256::Hash>(&utxou.hash().to_vec());
+    let sign = secp.sign(&msg, &sk);
+
+    format!("{} {} {}", kp.to_hex(), kp.to_hex(), sign.serialize_der().to_hex())
+}
 
 pub trait ToSecretKey {
     fn to_secret_key(&self) -> Result<SecretKey, Result<hex::Error, secp256k1::Error>>;

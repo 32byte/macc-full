@@ -3,11 +3,8 @@ use std::convert::TryInto;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    blockchain::Blockchain,
-    difficulty::Difficulty,
-    helper::current_unix_time,
-    transaction::Transaction,
-    txstore::TxStore,
+    blockchain::Blockchain, difficulty::Difficulty, helper::current_unix_time,
+    transaction::Transaction, txstore::TxStore,
 };
 
 #[cfg(feature = "mining")]

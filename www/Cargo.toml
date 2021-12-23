@@ -8,6 +8,7 @@ path = "rust-src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+secp256k1 = { version = "0.20.3", features = ["rand", "bitcoin_hashes"] }
 serde = { version = "1.0", features = ["derive"] }
 macc_lib = { path = "../lib" }
 serde_json = "1.0.59"

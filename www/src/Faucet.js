@@ -15,7 +15,7 @@ function Receive(props) {
   let send = () => {
     let address = document.getElementById("receiver-addr").value;
 
-    let req = api.send(macc, JSON.stringify(props.mine), props.balance, 1000, address, 'miner1', 'miner1', 0);
+    let req = api.send(macc, JSON.stringify(props.mine), props.balance, 1000, address, '217ddd77db89aa2787ab7f67df9ad885bf2e4925e3530e580fcc305308b2d54d', '1C38wZFmk6XphdF4kg9dtpAxLjzroC1a75', 0);
 
     req.then(_ => alert("1cc sent!"));
   };
@@ -34,7 +34,7 @@ function Faucet() {
   if (stuff === null) {
     import("../build/macc_wasm").then(macc => {
       api.getTxStore().then(res => res.json()).then(txs => {
-        setStuff(api.getMyUTXOs(macc, JSON.stringify(txs), "miner1"));
+        setStuff(api.getMyUTXOs(macc, JSON.stringify(txs), "1C38wZFmk6XphdF4kg9dtpAxLjzroC1a75"));
       });
     })
     return <p className="info">Updating blockchain..</p>;

@@ -30,9 +30,11 @@ impl WorkerModule {
         // collect valid transactions
         for tx in &new_txs.transactions.keys().cloned().collect::<Vec<Transaction>>() {
             if !tx.verify(tx_store, &mut used_tx_store) {
+                log::warn!("Removing invalid transaction!");
                 new_txs.remove_tx(tx);
             }
         }
+        data.write().await.new_transactions = new_txs.clone();
 
         let to_mine =
             miner::setup_mining_block(config, &blockchain, &tx_store, new_txs.sorted_txs(tx_store));

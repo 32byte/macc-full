@@ -12,8 +12,7 @@ use macc_lib::{
 };
 
 fn create_lock(config: &Config) -> String {
-    // TODO: update script module and generate lock
-    format!("{}", config.address)
+    macc_lib::ecdsa::create_lock(&config.address)
 }
 
 pub fn setup_mining_block(

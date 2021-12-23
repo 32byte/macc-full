@@ -1,11 +1,11 @@
-use std::{time::SystemTime};
+use std::time::SystemTime;
 
 use crate::settings::{HALVINGS_INTERVAL, START_MINING_REWARD};
 
 #[cfg(feature = "mining")]
-use std::sync::Arc;
-#[cfg(feature = "mining")]
 use rocket::tokio::sync::RwLock;
+#[cfg(feature = "mining")]
+use std::sync::Arc;
 #[cfg(feature = "mining")]
 pub type SharedData<T> = Arc<RwLock<T>>;
 

@@ -1,5 +1,6 @@
 use std::{collections::HashMap, convert::TryInto};
 
+use secp256k1::bitcoin_hashes::hex::ToHex;
 use serde::{Deserialize, Serialize};
 
 use crate::{hashes, script};
@@ -26,6 +27,13 @@ impl UTXOU {
             index: index,
             solution: solution,
         }
+    }
+
+    pub fn hash(&self) -> secp256k1::bitcoin_hashes::sha256::Hash {
+        let mut bytes = bincode::serialize(&self.tx_hash).expect("Couldn't serialize UTXO");
+        bytes.extend(bincode::serialize(&self.index).expect("Couldn't serialize UTXO"));
+
+        secp256k1::bitcoin_hashes::Hash::hash(&bytes)
     }
 }
 
@@ -84,7 +92,7 @@ impl Transaction {
                 // check if UTXO with the index exists
                 if let Some(utxo) = utxos.get(&utxou.index) {
                     // validate script
-                    if script::eval(format!("{} {}", &utxou.solution, &utxo.lock)).is_none() {
+                    if script::eval(format!("{} {} {}", &utxou.solution, utxou.hash().to_vec().to_hex(), &utxo.lock)).is_none() {
                         log::debug!("Invalid script!");
                         return false;
                     }
