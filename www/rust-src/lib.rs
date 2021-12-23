@@ -18,40 +18,15 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-pub fn big_computation() {
-    alert("Big computation in Rust");
-}
-
-#[wasm_bindgen]
-pub fn welcome(name: &str) {
-    alert(&format!("Hello {}, from Rust!", name));
-}
-
-#[wasm_bindgen]
-pub fn hash_tx(tx: &str, height: usize) -> Option<String> {
-    let tx: Transaction = if let Ok(t) = serde_json::from_str(tx) {
-        t
-    } else {
-        return None;
-    };
-
-    let hash = tx.hash(height);
-
-    if let Ok(json) = serde_json::to_string(&hash) {
-        return Some(json);
-    }
-    None
-}
-
-#[wasm_bindgen]
-pub fn get_mine(tx_store: &str, i: &str) -> String {
+pub fn get_owned_utxos(tx_store: &str, me: &str) -> String {
     let tx_store: TxStore = serde_json::from_str(tx_store).unwrap();
     let mut mine: TxStore = TxStore::new();
     let mut bal: u128 = 0;
 
     for (tx_hash, utxos) in &tx_store.0 {
         for (index, utxo) in utxos {
-            if utxo.lock.contains(i) {
+            // Note: should use script::eval for checking if owned
+            if utxo.lock.contains(me) {
                 bal += utxo.value;
 
                 if mine.0.get(tx_hash).is_none() {
@@ -82,6 +57,7 @@ pub fn get_send_body(
     my_addr: &str,
     fee: u32,
 ) -> Option<String> {
+    // try to parse secret-key
     let sk = if let Ok(s) = SecretKey::from_slice(&if let Ok(data) = Vec::from_hex(secret_key) {
         data
     } else {
@@ -94,6 +70,7 @@ pub fn get_send_body(
         return None;
     };
 
+    // check balance
     if bal < amount {
         alert("Not enough balance!");
         return None;
@@ -105,6 +82,7 @@ pub fn get_send_body(
     let mut vin: Vec<UTXOU> = Vec::new();
     let mut vout: Vec<UTXO> = Vec::new();
 
+    // Note: a better algorithm should be possible
     while sending < amount {
         let mine_cloned = mine.0.clone();
         let (tx_hash, utxos) = mine_cloned.iter().next().unwrap();
@@ -140,17 +118,25 @@ pub fn get_send_body(
 }
 
 #[wasm_bindgen]
-pub fn get_address(pk: &str) -> String {
-    let pk: PublicKey = PublicKey::from_slice(&Vec::from_hex(pk).unwrap()).unwrap();
-    
-    pk.as_address().unwrap()
+pub fn get_address(pk: &str) -> Option<String> {
+    if let Ok(addr) = pk.to_string().as_address() {
+        return Some(addr);
+    } 
+    None
 }
 
 #[wasm_bindgen]
-pub fn get_public_key(sk: &str) -> String {
-    let sk: SecretKey = SecretKey::from_slice(&Vec::from_hex(sk).unwrap()).unwrap();
-    
-    PublicKey::from_secret_key(&Secp256k1::new(), &sk).to_hex()
+pub fn get_public_key(sk: &str) -> Option<String> {
+    let sk_bytes = if let Ok(b) = Vec::from_hex(sk) {
+        b
+    } else {
+        return None;
+    };
+
+    if let Ok(sk) = SecretKey::from_slice(&sk_bytes) {
+        return Some(PublicKey::from_secret_key(&Secp256k1::new(), &sk).to_hex());
+    }
+    None
 }
 
 #[wasm_bindgen]

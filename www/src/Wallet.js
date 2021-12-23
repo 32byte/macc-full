@@ -1,21 +1,8 @@
 import React, { useState } from 'react';
 import { useCookies } from 'react-cookie';
 
-import api from "./API";
-
-function randomBytes(length) {
-  var result           = '';
-  var characters       = '0123456789abcdef';
-  var charactersLength = characters.length;
-  for ( var i = 0; i < length; i++ ) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength));
-  }
-  return result;
-}
-
-function random_secret_key() {
-  return randomBytes(64).toString('hex');
-}
+import randomBytes from './helper';
+import api from './API';
 
 function WalletData(props) {
   let [stuff, setStuff] = useState(null);
@@ -55,27 +42,25 @@ function WalletData(props) {
   )
 }
 
-function WalletWrap(props) {
+function WalletWrapper(props) {
   let [cookies, setCookie, removeCookie] = useCookies(['wallet', 'address']);
 
+  // handle setting cookies
   const setWallet = () => {
     let wallet = document.getElementById("wallet-name").value;
 
     if (wallet === "") {
       alert("Generated new wallet!");
-      wallet = random_secret_key();
+      wallet = randomBytes(32).toString('hex');
     }
 
     let pub_key = props.macc.get_public_key(wallet);
+    if (pub_key === undefined) { alert('Something went wrong!'); return; }
     let address = props.macc.get_address(pub_key);
+    if (address === undefined) { alert('Something went wrong!'); return; }
 
     setCookie('wallet', wallet, { path: '/' });
     setCookie('address', address, { path: '/' });
-  }
-
-  const deleteWallet = () => {
-    removeCookie("wallet");
-    removeCookie("address");
   }
 
   if (cookies.wallet === undefined) {
@@ -83,6 +68,12 @@ function WalletWrap(props) {
       <input type="text" id="wallet-name" placeholder="Wallet name:"/>
       <button onClick={setWallet}>Create new wallet</button>
     </div>)
+  }
+
+  // handle deleteCookies
+  const deleteWallet = () => {
+    removeCookie("wallet");
+    removeCookie("address");
   }
 
   return (
@@ -96,8 +87,8 @@ function WalletWrap(props) {
 }
 
 function Wallet() {
+  // load macc-lib
   let [macc, setMACC] = useState(null);
-  
   if (macc === null) {
     import("../build/macc_wasm").then(m => {
       setMACC(m);
@@ -106,7 +97,7 @@ function Wallet() {
   }
 
   return (
-    <WalletWrap macc={macc}/>
+    <WalletWrapper macc={macc}/>
   )
 }
 
