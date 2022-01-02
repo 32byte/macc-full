@@ -6,7 +6,8 @@ use macc_lib::blockchain::{
     blockchain::{BlockChainMethods, Blockchain},
     helper::SharedData,
     mempool::MemPool,
-    txstore::TxStore, transaction::Transaction,
+    transaction::Transaction,
+    txstore::TxStore,
 };
 use rocket::tokio::{self, sync::RwLock, task::JoinHandle};
 
@@ -28,7 +29,12 @@ impl WorkerModule {
         let mut used_tx_store: TxStore = TxStore::new();
 
         // collect valid transactions
-        for tx in &new_txs.transactions.keys().cloned().collect::<Vec<Transaction>>() {
+        for tx in &new_txs
+            .transactions
+            .keys()
+            .cloned()
+            .collect::<Vec<Transaction>>()
+        {
             if !tx.verify(tx_store, &mut used_tx_store) {
                 log::warn!("Removing invalid transaction!");
                 new_txs.remove_tx(tx);

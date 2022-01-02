@@ -1,4 +1,6 @@
 use log::{Level, Metadata, Record};
+
+#[cfg(not(target_os = "windows"))]
 use termion::color;
 
 pub struct CustomLogger;
@@ -10,13 +12,7 @@ impl log::Log for CustomLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            let color: String = match record.level() {
-                Level::Error => color::Fg(color::Red).to_string(),
-                Level::Warn => color::Fg(color::Yellow).to_string(),
-                Level::Info => color::Fg(color::Blue).to_string(),
-                Level::Debug => color::Fg(color::LightBlack).to_string(),
-                _ => "".to_string(),
-            };
+            let color: String = self.get_prefix_color(record);
 
             let time = chrono::Utc::now().format("[%H:%M:%S %3f]").to_string();
 
@@ -25,4 +21,22 @@ impl log::Log for CustomLogger {
     }
 
     fn flush(&self) {}
+}
+
+impl CustomLogger {
+    #[cfg(target_os = "windows")]
+    fn get_prefix_color(&self, _metadata: &Record) -> String {
+        "".to_string()
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn get_prefix_color(&self, metadata: &Record) -> String {
+        match record.level() {
+            Level::Error => color::Fg(color::Red).to_string(),
+            Level::Warn => color::Fg(color::Yellow).to_string(),
+            Level::Info => color::Fg(color::Blue).to_string(),
+            Level::Debug => color::Fg(color::LightBlack).to_string(),
+            _ => "".to_string(),
+        }
+    }
 }

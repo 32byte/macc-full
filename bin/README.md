@@ -6,7 +6,7 @@ This project contains the code for the node and relies on the lib.
 
 1. Build the project with `cargo build --release`
 2. Copy the binary `./target/release/macc(.exe)` to a new folder
-3. Create a config in the same folder, example config can be found below
+3. Create a `config.json` in the same folder, example config can be found below
 4. Run the binary
 
 ### Example Config

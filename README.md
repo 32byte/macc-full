@@ -39,3 +39,4 @@ How to run each project is described in the README.md located in the project's f
 - Re-exports in macc-lib
 - Tests
 - Update python library
+- Colored logging for windows

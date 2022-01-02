@@ -1,9 +1,9 @@
 use super::{config::Config, data::Data, node::Module};
 use macc_lib::blockchain::helper::SharedData;
-use rocket::tokio::{self, task::JoinHandle};
-use rocket::http::Header;
-use rocket::{Request, Response};
 use rocket::fairing::{Fairing, Info, Kind};
+use rocket::http::Header;
+use rocket::tokio::{self, task::JoinHandle};
+use rocket::{Request, Response};
 
 pub struct CORS;
 
@@ -12,13 +12,16 @@ impl Fairing for CORS {
     fn info(&self) -> Info {
         Info {
             name: "Add CORS headers to responses",
-            kind: Kind::Response
+            kind: Kind::Response,
         }
     }
 
     async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
         response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
-        response.set_header(Header::new("Access-Control-Allow-Methods", "POST, GET, PATCH, OPTIONS"));
+        response.set_header(Header::new(
+            "Access-Control-Allow-Methods",
+            "POST, GET, PATCH, OPTIONS",
+        ));
         response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }
@@ -29,13 +32,13 @@ pub struct ServerModule;
 mod server_routes {
     use std::net::SocketAddr;
 
+    use crate::client::data::Data;
     use macc_lib::blockchain::blockchain::BlockChainMethods;
     use macc_lib::blockchain::{
         block::Block, blockchain::Blockchain, helper::SharedData, transaction::Transaction,
         txstore::TxStore,
     };
     use rocket::{serde::json::Json, State};
-    use crate::client::data::Data;
 
     #[get("/block-height")]
     pub async fn get_block_height(data: &State<SharedData<Data>>) -> String {
@@ -75,7 +78,15 @@ mod server_routes {
 
     #[get("/mempool")]
     pub async fn get_mempool(data: &State<SharedData<Data>>) -> Json<Vec<Transaction>> {
-        Json(data.read().await.new_transactions.transactions.keys().cloned().collect())
+        Json(
+            data.read()
+                .await
+                .new_transactions
+                .transactions
+                .keys()
+                .cloned()
+                .collect(),
+        )
     }
 
     #[post("/new-tx", data = "<tx>")]
