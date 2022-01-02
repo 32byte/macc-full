@@ -30,7 +30,7 @@ impl CustomLogger {
     }
 
     #[cfg(not(target_os = "windows"))]
-    fn get_prefix_color(&self, metadata: &Record) -> String {
+    fn get_prefix_color(&self, record: &Record) -> String {
         match record.level() {
             Level::Error => color::Fg(color::Red).to_string(),
             Level::Warn => color::Fg(color::Yellow).to_string(),
