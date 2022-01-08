@@ -40,3 +40,6 @@ How to run each project is described in the README.md located in the project's f
 - Tests
 - Update python library
 - Colored logging for windows
+- Miner handle sigint
+- Publish Docker images
+- Use ENV config for better docker support
