@@ -1,4 +1,4 @@
-const NODE_URL = 'http://127.0.0.1:1111/';
+const NODE_URL = 'http://host.docker.internal:1111/';
 
 function getBlockchain(start, stop) {
   let url = NODE_URL + 'blockchain?from=' + start + '&until=' + stop;
