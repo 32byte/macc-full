@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "webpack server",
-    "build:webpack": "webpack build",
+    "start": "webpack serve --open --config webpack.dev.js",
+    "build:webpack": "webpack --config webpack.prod.js",
     "build:wasm": "cargo build --target wasm32-unknown-unknown --release",
     "build:bindgen": "wasm-bindgen target/wasm32-unknown-unknown/release/macc_wasm.wasm --out-dir build",
     "dev": "npm run build:wasm && npm run build:bindgen && npm run start"

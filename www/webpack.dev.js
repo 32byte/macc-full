@@ -42,6 +42,9 @@ module.exports = {
     new WasmPackPlugin({
       crateDirectory: path.resolve(__dirname, ".")
     }),
+    new webpack.DefinePlugin({
+      'process.env.NODE_URL': JSON.stringify(process.env.NODE_URL),
+    }),
   ],
   mode: "development",
   devtool: 'inline-source-map',
