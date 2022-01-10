@@ -1,7 +1,9 @@
 # Building WWW using docker
 
 ## Requirements
-[Install docker](https://docs.docker.com/engine/install/) on your platform
+1. [Install docker](https://docs.docker.com/engine/install/) on your platform
+2. Download [these files](https://codeload.github.com/32byte/macc-full/zip/refs/heads/docker)
+3. Unzip the files into a folder
 
 
 ## Building
@@ -21,8 +23,7 @@ If you make any changes to the config you will need to recreate the image with t
 
 ## Running
 This will create a new container and run it
-```cmd
-in cmd:
+```
 .\create-and-run-www.bat
 ```
 If you get an error that the container is already running, stop it with:
