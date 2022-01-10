@@ -1,45 +1,35 @@
-# [M]atura[A]rbeit [C]rypto[C]urrency
-
-This project contains the code for the complete cryptocurrency and a frontend application
-
-
-## Layout
-
-[lib](lib/README.md) - Rust library with the data structures and helper functions used by the other projects
-
-[bin](bin/README.md) - Contains code for the cryptocurrency node
-
-[py](py/README.md) - Python library for `lib` and a wallet implementation (WARNING: python library is outdated)
-
-[www](www/README.md) - ReactJS Frontend for the node, has an explorer, wallet and faucet
-
+# Building WWW using docker
 
 ## Requirements
-
-A working installation of:
-
-- [rust nightly](https://doc.rust-lang.org/book/appendix-07-nightly-rust.html)
-- [nodejs](https://nodejs.org/en/download/)
-- [python](https://www.python.org/downloads/)
-
-is required.
+[Install docker](https://docs.docker.com/engine/install/) on your platform
 
 
+## Building
+```cmd
+in cmd:
+.\build-www.bat
+```
 
-## Usage
 
-How to run each project is described in the README.md located in the project's folder
+## Configuring
+Edit config.bat:
+- NODE_URL: is the url of your miner / node you're getting info from. Use `host.docker.internal:8033` if you want it to communicate with the miner running on your system, make sure the port is correct.
+- PORT: the port to run the webserver on
+
+If you make any changes to the config you will need to recreate the image with the `create-and-run-www.bat` script.
 
 
-## Improvements
-- Broadcast transactions
-- Use `script::eval` in `get_owned_transactions`
-- Use a better algorithm in `get_send_body`
-- move all functions to macc-lib so www-lib can only expose them
-- Re-exports in macc-lib
-- Tests
-- Update python library
-- Colored logging for windows
-- Miner handle sigint
-- Publish Docker images
-- Use ENV config for better docker support
+## Running
+This will create a new container and run it
+```cmd
+in cmd:
+.\create-and-run-www.bat
+```
+If you get an error that the container is already running, stop it with:
+```cmd
+docker kill www
+```
+If you already created a container and want to just start it again:
+```cmd
+docker start www
+```
