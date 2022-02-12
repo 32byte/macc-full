@@ -1,6 +1,7 @@
-use secp256k1::{bitcoin_hashes::hex::{FromHex}, Secp256k1};
+/*
+use bitcoin_hashes::hex::FromHex;
 
-use crate::ecdsa;
+// use crate::ecdsa;
 
 fn op_eq(stack: &mut Vec<String>) -> bool {
     let val1 = match stack.pop() {
@@ -32,6 +33,7 @@ fn to_addr(stack: &mut Vec<String>) -> bool {
     stack.push(addr);
     true
 }
+
 
 fn verify_signature(stack: &mut Vec<String>) -> bool {
     // pop data from stack
@@ -86,4 +88,9 @@ pub fn eval(script: String) -> Option<Vec<String>> {
         }
     }
     Some(stack)
+}
+*/
+pub fn eval(_script: String) -> Option<Vec<String>> {
+    //TODO: implement this
+    Some(Vec::new())
 }

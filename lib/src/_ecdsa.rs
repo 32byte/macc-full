@@ -77,3 +77,4 @@ pub fn create_solution(secp: &Secp256k1<All>, sk: SecretKey, utxou: &UTXOU) -> S
         sign.serialize_der().to_hex()
     )
 }
+*/

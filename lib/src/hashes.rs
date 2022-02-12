@@ -1,9 +1,12 @@
-use secp256k1::bitcoin_hashes::{ripemd160, sha256, Hash};
+use std::error::Error;
 
-pub fn sha256(data: &Vec<u8>) -> Vec<u8> {
-    sha256::Hash::hash(data).to_vec()
+use bitcoin_hashes::{sha256, Hash};
+
+pub fn sha256(data: &Vec<u8>) -> Result<[u8; 32], Box<dyn Error>> {
+    Ok(sha256::Hash::hash(data).as_ref().try_into()?)
 }
 
+/*
 pub fn ripemd160(data: &Vec<u8>) -> Vec<u8> {
     ripemd160::Hash::hash(data).to_vec()
 }
@@ -18,3 +21,4 @@ pub fn checksum(data: &Vec<u8>) -> Vec<u8> {
 
     hash[0..4].to_vec()
 }
+ */
