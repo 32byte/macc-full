@@ -21,6 +21,7 @@ pub fn create_rng() -> Result<OsRng, rand::Error> {
 }
 
 // client with wrapper & helper functions
+#[derive(Clone)]
 pub struct Client {
     pub pb_key: PublicKey,
     pub sk_key: SecretKey,

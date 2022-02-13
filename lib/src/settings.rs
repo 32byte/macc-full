@@ -1,3 +1,6 @@
+use crate::blockchain::difficulty;
+
+#[derive(Debug, Clone, Copy)]
 pub struct Settings {
     // difficulty settings
     pub target_time: u64,
@@ -10,6 +13,7 @@ pub struct Settings {
 
     // general settings
     pub crypto_precision: u32,
+    pub start_difficulty: [u8; 32],
 }
 
 impl Settings {
@@ -20,6 +24,7 @@ impl Settings {
         halvings_interval: usize,
         start_mining_reward: u128,
         crypto_precision: u32,
+        start_difficulty: [u8; 32],
     ) -> Self {
         Self {
             target_time,
@@ -30,6 +35,7 @@ impl Settings {
             start_mining_reward,
 
             crypto_precision,
+            start_difficulty,
         }
     }
 }
@@ -47,6 +53,7 @@ impl Default for Settings {
             start_mining_reward: 100_u128 * 10_u32.pow(crypto_precision) as u128,
 
             crypto_precision,
+            start_difficulty: difficulty::create(1).expect("UNREACHABLE"),
         }
     }
 }

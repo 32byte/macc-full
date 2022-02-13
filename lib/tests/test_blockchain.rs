@@ -20,7 +20,7 @@ mod tests {
         // create store
         let mut store = TxStore::new_empty();
         // create start difficulty
-        let mut diff = difficulty::create(1)?;
+        let mut diff = settings.start_difficulty;
 
         // setup for ecdsa & script testing
         let secp = create_secp();
@@ -59,7 +59,7 @@ mod tests {
         // check if block can be added
 
         // calculate difficulty for the block
-        bc.adjust_difficulty(&mut diff, &settings);
+        diff = bc.adjust_difficulty(diff, &settings);
         // check if block can be added
         let can_be_added = bc.valid_next(&b, &store, &diff, &settings).unwrap_or(false);
 
@@ -145,7 +145,7 @@ mod tests {
         // check if block can be added
 
         // calculate difficulty for the block
-        bc.adjust_difficulty(&mut diff, &settings);
+        diff = bc.adjust_difficulty(diff, &settings);
         // check if block can be added
         let can_be_added = bc.valid_next(&b, &store, &diff, &settings).unwrap_or(false);
 
@@ -158,6 +158,8 @@ mod tests {
         println!("Transaction {} added!", tx_hash.to_hex());
 
         println!("{:?}", store);
+
+        assert!(bc.is_valid(&settings).is_some());
 
         Ok(())
     }

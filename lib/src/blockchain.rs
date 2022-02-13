@@ -13,9 +13,10 @@ use self::utils::{calculate_mining_reward, is_valid_tx};
 //       it always uses the log::debug
 // https://stackoverflow.com/questions/67087597/is-it-possible-to-use-rusts-log-info-for-tests
 // #[cfg(not(test))]
-use log::debug; // Use log crate when building application
-                // #[cfg(test)]
-                // use std::{println as debug}; // Workaround to use prinltn! for logs.
+// Use log crate when building application
+use log::debug; 
+// #[cfg(test)]
+// use std::{println as debug}; // Workaround to use prinltn! for logs.
 
 pub mod difficulty {
     use std::{
@@ -341,20 +342,45 @@ impl Blockchain {
         self.0.push(block);
     }
 
-    pub fn adjust_difficulty(&self, difficulty: &mut [u8; 32], settings: &Settings) {
+    pub fn adjust_difficulty(&self, difficulty: [u8; 32], settings: &Settings) -> [u8; 32] {
         if (self.height() as u32) < settings.adjustment_interval
             || (self.height() as u32) % settings.adjustment_interval != 0
         {
-            return;
+            return difficulty;
         }
 
         let time_interval =
             self.at(-1).timestamp - self.at(-(settings.adjustment_interval as i32)).timestamp;
 
-        *difficulty = difficulty::adjusted(difficulty, time_interval, settings);
+        debug!(
+            "Targeted block time: {}, Current block time: {}",
+            settings.target_time,
+            time_interval as f64 / settings.adjustment_interval as f64
+        );
+
+        difficulty::adjusted(&difficulty, time_interval, settings)
     }
 
-    // TODO: pub fn is_valid()
+    pub fn is_valid(&self, settings: &Settings) -> Option<(TxStore, [u8; 32])> {
+        let mut blockchain = Blockchain::new_empty();
+        let mut store = TxStore::new_empty();
+        let mut difficulty = settings.start_difficulty;
+
+        for block in &self.0 {
+            // adjust difficulty
+            difficulty = blockchain.adjust_difficulty(difficulty, settings);
+
+            // if next block isn't valid, whole blockchain isn't valid
+            if !blockchain.valid_next(block, &store, &difficulty, settings)? {
+                return None;
+            }
+
+            // add block to blockchain
+            blockchain.add(&mut store, block.clone());
+        }
+
+        Some((store, difficulty))
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
