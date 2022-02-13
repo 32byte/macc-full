@@ -12,10 +12,10 @@ use self::utils::{calculate_mining_reward, is_valid_tx};
 // NOTE: it should work with the #[cfg] but somehow it doesnt
 //       it always uses the log::debug
 // https://stackoverflow.com/questions/67087597/is-it-possible-to-use-rusts-log-info-for-tests
-// #[cfg(not(test))] 
+// #[cfg(not(test))]
 use log::debug; // Use log crate when building application
-// #[cfg(test)]
-// use std::{println as debug}; // Workaround to use prinltn! for logs.
+                // #[cfg(test)]
+                // use std::{println as debug}; // Workaround to use prinltn! for logs.
 
 pub mod difficulty {
     use std::{
@@ -23,7 +23,10 @@ pub mod difficulty {
         vec,
     };
 
-    use crate::{utils::{arr_to_bi, bi_to_arr}, settings::Settings};
+    use crate::{
+        settings::Settings,
+        utils::{arr_to_bi, bi_to_arr},
+    };
 
     // create a difficulty array
     pub fn create(num_zeros: usize) -> Result<[u8; 32], Error> {
@@ -58,13 +61,10 @@ pub mod difficulty {
     }
 
     // will adjust the difficulty to try to reach target block time
-    pub fn adjusted(
-        current: &[u8; 32],
-        time_interval: u64,
-        settings: &Settings
-    ) -> [u8; 32] {
+    pub fn adjusted(current: &[u8; 32], time_interval: u64, settings: &Settings) -> [u8; 32] {
         // calculate the current ratio
-        let ratio = ((settings.target_time * settings.adjustment_interval as u64) as f64) / (time_interval as f64);
+        let ratio = ((settings.target_time * settings.adjustment_interval as u64) as f64)
+            / (time_interval as f64);
 
         // convert difficulty to bigint for easier calculations
         let mut diff_bi = arr_to_bi(current);
@@ -83,7 +83,7 @@ pub mod utils {
     use crate::settings::Settings;
     use crate::{hashes, script};
 
-    use super::{Transaction, TxStore, debug};
+    use super::{debug, Transaction, TxStore};
 
     pub fn hash_utxou(utxou: (&[u8; 32], &usize)) -> Result<[u8; 32], Box<dyn Error>> {
         let mut bytes: Vec<u8> = Vec::new();
@@ -104,13 +104,8 @@ pub mod utils {
                 // check if utxou is hashable
                 if let Ok(utxou_hash) = hash_utxou((hash, index)) {
                     // validate script
-                    if script::eval(format!(
-                        "{} {} {}",
-                        solution,
-                        utxou_hash.to_hex(),
-                        lock
-                    ))
-                    .is_none()
+                    if script::eval(format!("{} {} {}", solution, utxou_hash.to_hex(), lock))
+                        .is_none()
                     {
                         debug!("Invalid solution!");
                         return false;
@@ -146,10 +141,7 @@ pub mod utils {
         }
     }
 
-    pub fn calculate_mining_reward(
-        block_height: usize,
-        settings: &Settings
-    ) -> u128 {
+    pub fn calculate_mining_reward(block_height: usize, settings: &Settings) -> u128 {
         // based on formula reward = floor( start_reward / 2^( floor(block_height / halving_interval) ) )
         // https://www.desmos.com/calculator
 
@@ -185,7 +177,7 @@ impl Transaction {
         Self {
             nonce: block_height as u128,
             vin: vec![],
-            vout: vec![(reward, lock)]
+            vout: vec![(reward, lock)],
         }
     }
 
@@ -208,7 +200,7 @@ impl Transaction {
         for (hash, index, _) in &self.vin {
             total += store.get(hash, index)?.0
         }
-        
+
         Some(total)
     }
 }
@@ -269,7 +261,7 @@ impl Blockchain {
         block: &Block,
         store: &TxStore,
         difficulty: &[u8; 32],
-        settings: &Settings
+        settings: &Settings,
     ) -> Option<bool> {
         // validate timestamp
         // doesn't need validation if first block
@@ -293,8 +285,7 @@ impl Blockchain {
 
         // validate transaction
         let mut coinbase_tx: Option<Transaction> = None;
-        let mining_reward =
-            calculate_mining_reward(self.height(), settings);
+        let mining_reward = calculate_mining_reward(self.height(), settings);
         let mut fees = 0_u128;
 
         for tx in &block.transactions {
@@ -350,11 +341,7 @@ impl Blockchain {
         self.0.push(block);
     }
 
-    pub fn adjust_difficulty(
-        &self,
-        difficulty: &mut [u8; 32],
-        settings: &Settings
-    ) {
+    pub fn adjust_difficulty(&self, difficulty: &mut [u8; 32], settings: &Settings) {
         if (self.height() as u32) < settings.adjustment_interval
             || (self.height() as u32) % settings.adjustment_interval != 0
         {
@@ -364,11 +351,7 @@ impl Blockchain {
         let time_interval =
             self.at(-1).timestamp - self.at(-(settings.adjustment_interval as i32)).timestamp;
 
-        *difficulty = difficulty::adjusted(
-            difficulty,
-            time_interval,
-            settings
-        );
+        *difficulty = difficulty::adjusted(difficulty, time_interval, settings);
     }
 
     // TODO: pub fn is_valid()

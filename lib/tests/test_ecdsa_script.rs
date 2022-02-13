@@ -4,7 +4,7 @@ extern crate macc_lib;
 mod tests {
     use std::error::Error;
 
-    use macc_lib::{ecdsa::*, script, hex::ToHex};
+    use macc_lib::{ecdsa::*, hex::ToHex, script};
 
     #[test]
     fn test_ecdsa_with_script() -> Result<(), Box<dyn Error>> {
@@ -33,7 +33,7 @@ mod tests {
             message.as_ref().to_hex(),
             lock
         ));
-        
+
         let valid = stack.is_some();
 
         assert!(valid);

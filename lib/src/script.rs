@@ -1,7 +1,7 @@
-use secp256k1::{Secp256k1, All};
+use secp256k1::{All, Secp256k1};
 
-use crate::hex::FromHex;
 use crate::ecdsa;
+use crate::hex::FromHex;
 
 fn op_eq(stack: &mut Vec<String>) -> Option<bool> {
     let val1 = stack.pop()?;
@@ -35,7 +35,7 @@ fn verify_signature(stack: &mut Vec<String>, secp: &Secp256k1<All>) -> Option<bo
 
     let sig_bytes = Vec::from_hex(&sig_str).ok()?;
     let sig = ecdsa::sig_from_bytes(&sig_bytes).ok()?;
-    
+
     let pk_bytes = Vec::from_hex(&pb_key_str).ok()?;
     let pb_key = ecdsa::pb_key_from_bytes(&pk_bytes).ok()?;
 

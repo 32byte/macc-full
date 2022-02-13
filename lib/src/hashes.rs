@@ -1,7 +1,10 @@
-use bitcoin_hashes::{sha256, Hash, ripemd160};
+use bitcoin_hashes::{ripemd160, sha256, Hash};
 
 pub fn sha256(data: &Vec<u8>) -> [u8; 32] {
-    sha256::Hash::hash(data).as_ref().try_into().expect("UNREACHABLE")
+    sha256::Hash::hash(data)
+        .as_ref()
+        .try_into()
+        .expect("UNREACHABLE")
 }
 
 pub fn ripemd160(data: &Vec<u8>) -> Vec<u8> {

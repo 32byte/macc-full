@@ -19,7 +19,7 @@ impl Settings {
         precision: u32,
         halvings_interval: usize,
         start_mining_reward: u128,
-        crypto_precision: u32
+        crypto_precision: u32,
     ) -> Self {
         Self {
             target_time: target_time,
@@ -50,7 +50,6 @@ impl Default for Settings {
         }
     }
 }
-
 
 // general settings
 

@@ -1,12 +1,12 @@
 use bitcoin_hashes::sha256;
-use secp256k1::ecdsa::Signature;
-use secp256k1::{Secp256k1, All, PublicKey, SecretKey, Message};
-use secp256k1::rand as rand;
 use rand::rngs::OsRng;
+use secp256k1::ecdsa::Signature;
+use secp256k1::rand;
+use secp256k1::{All, Message, PublicKey, Secp256k1, SecretKey};
 use std::error::Error;
 
-use crate::blockchain::Transaction;
 use crate::blockchain::utils::hash_utxou;
+use crate::blockchain::Transaction;
 use crate::hashes;
 use crate::hex::ToHex;
 
@@ -44,40 +44,45 @@ impl Client {
     }
 
     pub fn create_transaction(
-        &mut self, secp: &Secp256k1<All>,
+        &mut self,
+        secp: &Secp256k1<All>,
         input: Vec<([u8; 32], usize)>,
-        output: Vec<(u128, PublicKey)>
+        output: Vec<(u128, PublicKey)>,
     ) -> Option<Transaction> {
         // for each input create a solution
-        let vin: Vec<([u8; 32], usize, String)> = input.iter().filter_map(|(hash, index)| {
-            let message = hash_utxou((hash, index)).ok()?.to_hex();
-            let solution = create_solution(secp, self, &msg_from_str(&message));
+        let vin: Vec<([u8; 32], usize, String)> = input
+            .iter()
+            .filter_map(|(hash, index)| {
+                let message = hash_utxou((hash, index)).ok()?.to_hex();
+                let solution = create_solution(secp, self, &msg_from_str(&message));
 
-            Some((*hash, *index, solution))
-        })
-        .collect();
+                Some((*hash, *index, solution))
+            })
+            .collect();
 
         // if they aren't equally big that means
         // that the hash_utxou failed somewhere meaning
-        // that one of the inputs is invalid 
+        // that one of the inputs is invalid
         //  -> invalid inputs -> can't create transaction
         if vin.len() != input.len() {
             return None;
         }
 
-        let vout: Vec<(u128, String)> = output.iter().map(|(amount, receiver)| {
-            let lock = create_lock(receiver);
+        let vout: Vec<(u128, String)> = output
+            .iter()
+            .map(|(amount, receiver)| {
+                let lock = create_lock(receiver);
 
-            (*amount, lock)
-        })
-        .collect();
+                (*amount, lock)
+            })
+            .collect();
 
         // create transaction
         let tx = Transaction {
             nonce: self.nonce,
             vin: vin,
 
-            vout: vout
+            vout: vout,
         };
         // update nonce
         self.nonce += 1;
@@ -114,10 +119,10 @@ pub fn pb_key_to_addr(pk: &Vec<u8>) -> String {
 }
 
 pub fn valid_signature(
-    secp: &Secp256k1<All>, 
-    message: &Message, 
-    signature: &Signature, 
-    pk_key: &PublicKey
+    secp: &Secp256k1<All>,
+    message: &Message,
+    signature: &Signature,
+    pk_key: &PublicKey,
 ) -> bool {
     secp.verify_ecdsa(&message, signature, pk_key).is_ok()
 }

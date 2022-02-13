@@ -22,7 +22,6 @@ mod tests {
         // create start difficulty
         let mut diff = difficulty::create(1)?;
 
-
         // setup for ecdsa & script testing
         let secp = create_secp();
         let mut rng = create_rng()?;
@@ -70,8 +69,6 @@ mod tests {
 
         bc.add(&mut store, b);
 
-
-
         // create new block and send a transaction
 
         // create the block
@@ -107,14 +104,12 @@ mod tests {
             // send half to my_client
             (reward / 2, my_client.pb_key),
             // send other half back to himself
-            (reward - (reward / 2), miner_client.pb_key)
+            (reward - (reward / 2), miner_client.pb_key),
         ];
         // create transaciton
-        let tx = miner_client.create_transaction(
-            &secp,
-            input,
-            output
-        ).expect("Couldn't create the transaction!");
+        let tx = miner_client
+            .create_transaction(&secp, input, output)
+            .expect("Couldn't create the transaction!");
         // the code below would do this manually
         // create the "message" which is the hash of the utxo we want to unlock
         // let message_str = utils::hash_utxou((&cb_hash, &0))?.to_hex();
@@ -128,21 +123,21 @@ mod tests {
         // let miner_client_lock = create_lock(&miner_client.pb_key);
         // the transaction to my_client
         // let tx = Transaction {
-            // make sure this is always a new number
-            // NOTE: actually it might be ok to reuse a number
-            //       since the hash will be always different anyway
-            //       because the utxou is always different
-            // nonce: 0,
+        // make sure this is always a new number
+        // NOTE: actually it might be ok to reuse a number
+        //       since the hash will be always different anyway
+        //       because the utxou is always different
+        // nonce: 0,
 
-            // use the first utxo of the coinbase transaction
-            // from the last block
-            // vin: vec![(cb_hash, 0, miner_solution)],
-            // send the amount = reward to my account
-            // vout: vec![(reward / 2, my_client_lock), (reward - (reward / 2), miner_client_lock)]
+        // use the first utxo of the coinbase transaction
+        // from the last block
+        // vin: vec![(cb_hash, 0, miner_solution)],
+        // send the amount = reward to my account
+        // vout: vec![(reward / 2, my_client_lock), (reward - (reward / 2), miner_client_lock)]
         // };
         let tx_hash = tx.hash()?;
         // add tx to block
-         b.transactions.push(tx);
+        b.transactions.push(tx);
 
         // find & set nonce for block
         b.nonce = find_nonce(&b, &diff)?;
