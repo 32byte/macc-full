@@ -5,6 +5,7 @@ mod tests {
     use std::error::Error;
 
     use macc_lib::blockchain::*;
+    use macc_lib::ecdsa::*;
     use macc_lib::hex::ToHex;
     use macc_lib::settings::Settings;
     use macc_lib::utils::*;
@@ -20,6 +21,14 @@ mod tests {
         let mut store = TxStore::new_empty();
         // create start difficulty
         let mut diff = difficulty::create(1)?;
+
+
+        // setup for ecdsa & script testing
+        let secp = create_secp();
+        let mut rng = create_rng()?;
+
+        let mut miner_client = Client::new_random(&secp, &mut rng);
+        let my_client = Client::new_random(&secp, &mut rng);
 
         // create a block
         let mut b = Block {
@@ -38,7 +47,7 @@ mod tests {
 
         // create coinbase transaction
         let reward = utils::calculate_mining_reward(bc.height(), &settings);
-        let lock = String::from("miner"); // TODO
+        let lock = create_lock(&miner_client.pb_key);
         let cb_tx = Transaction::new_coinbase(bc.height(), reward, lock);
 
         let cb_hash = cb_tx.hash()?;
@@ -83,31 +92,57 @@ mod tests {
         // NOTE: technically a coinbase transaction is not needed
         // create coinbase transaction
         // let reward = utils::calculate_mining_reward(bc.height(), &settings);
-        // let lock = String::from("miner"); // TODO
+        // let lock = create_lock(&miner_client.pb_key);
         // let cb_tx = Transaction::new_coinbase(0, reward, lock);
         // add coinbase transaction to the block
         // b.transactions.push(cb_tx);
 
-        // create our own transaction
-        let tx = Transaction {
+        // create our own transaction in which the miner sends
+        // half of his previous mining reward to our address
+        // and the other half back to himself
+        // create input
+        let input = vec![(cb_hash, 0)];
+        // create output
+        let output = vec![
+            // send half to my_client
+            (reward / 2, my_client.pb_key),
+            // send other half back to himself
+            (reward - (reward / 2), miner_client.pb_key)
+        ];
+        // create transaciton
+        let tx = miner_client.create_transaction(
+            &secp,
+            input,
+            output
+        ).expect("Couldn't create the transaction!");
+        // the code below would do this manually
+        // create the "message" which is the hash of the utxo we want to unlock
+        // let message_str = utils::hash_utxou((&cb_hash, &0))?.to_hex();
+        // create the message object
+        // let message = msg_from_str(&message_str);
+        // create the solution
+        // let miner_solution = create_solution(&secp, &miner_client, &message);
+        // create new lock (using the address of 'my_client')
+        // let my_client_lock = create_lock(&my_client.pb_key);
+        // create new lock (using the address of 'miner_client')
+        // let miner_client_lock = create_lock(&miner_client.pb_key);
+        // the transaction to my_client
+        // let tx = Transaction {
             // make sure this is always a new number
             // NOTE: actually it might be ok to reuse a number
             //       since the hash will be always different anyway
             //       because the utxou is always different
-            nonce: 0,
+            // nonce: 0,
 
             // use the first utxo of the coinbase transaction
             // from the last block
-            // TODO: solution
-            vin: vec![(cb_hash, 0, "solution".to_string())],
+            // vin: vec![(cb_hash, 0, miner_solution)],
             // send the amount = reward to my account
-            // TODO: lock
-            vout: vec![(reward, "lock".to_string())]
-        };
+            // vout: vec![(reward / 2, my_client_lock), (reward - (reward / 2), miner_client_lock)]
+        // };
         let tx_hash = tx.hash()?;
-
         // add tx to block
-        b.transactions.push(tx);
+         b.transactions.push(tx);
 
         // find & set nonce for block
         b.nonce = find_nonce(&b, &diff)?;
@@ -126,6 +161,8 @@ mod tests {
         bc.add(&mut store, b);
 
         println!("Transaction {} added!", tx_hash.to_hex());
+
+        println!("{:?}", store);
 
         Ok(())
     }

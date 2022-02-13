@@ -7,3 +7,4 @@ pub mod hashes;
 pub mod script;
 pub mod utils;
 pub mod settings;
+pub mod ecdsa;

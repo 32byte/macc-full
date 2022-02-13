@@ -1,96 +1,70 @@
-/*
-use bitcoin_hashes::hex::FromHex;
+use secp256k1::{Secp256k1, All};
 
-// use crate::ecdsa;
+use crate::hex::FromHex;
+use crate::ecdsa;
 
-fn op_eq(stack: &mut Vec<String>) -> bool {
-    let val1 = match stack.pop() {
-        Some(x) => x,
-        None => return false,
-    };
+fn op_eq(stack: &mut Vec<String>) -> Option<bool> {
+    let val1 = stack.pop()?;
+    let val2 = stack.pop()?;
 
-    let val2 = match stack.pop() {
-        Some(x) => x,
-        None => return false,
-    };
-
-    val1 == val2
+    Some(val1 == val2)
 }
 
-fn to_addr(stack: &mut Vec<String>) -> bool {
-    let pub_key = match stack.pop() {
-        Some(x) => x,
-        None => return false,
-    };
-
-    let pk_bytes = match Vec::from_hex(&pub_key) {
-        Ok(p) => p,
-        Err(_) => return false,
-    };
-
-    let addr = ecdsa::pk_to_address(&pk_bytes);
-
+fn to_addr(stack: &mut Vec<String>) -> Option<bool> {
+    // get the public key in hex format
+    let pb_key = stack.pop()?;
+    // convert to array of bytes
+    let pk_bytes = Vec::from_hex(&pb_key).ok()?;
+    // convert to address
+    let addr = ecdsa::pb_key_to_addr(&pk_bytes);
+    // push onto the stack
     stack.push(addr);
-    true
+
+    Some(true)
 }
 
-
-fn verify_signature(stack: &mut Vec<String>) -> bool {
+fn verify_signature(stack: &mut Vec<String>, secp: &Secp256k1<All>) -> Option<bool> {
     // pop data from stack
-    let msg = match stack.pop() {
-        Some(x) => x,
-        None => return false,
-    };
-    let sig = match stack.pop() {
-        Some(x) => x,
-        None => return false,
-    };
-    let pub_key = match stack.pop() {
-        Some(x) => x,
-        None => return false,
-    };
+    let msg_str = stack.pop()?;
+    let sig_str = stack.pop()?;
+    let pb_key_str = stack.pop()?;
 
     // parse data
-    let msg = match ecdsa::msg_from_hex(&msg) {
-        Some(m) => m,
-        None => return false,
-    };
-    let sig = match ecdsa::sig_from_hex(&sig) {
-        Some(s) => s,
-        None => return false,
-    };
-    let pk = match ecdsa::pk_from_hex(&pub_key) {
-        Some(p) => p,
-        None => return false,
-    };
+    let msg_bytes = Vec::from_hex(&msg_str).ok()?;
+    let msg = ecdsa::msg_from_bytes(&msg_bytes).ok()?;
 
-    Secp256k1::new().verify(&msg, &sig, &pk).is_ok()
+    let sig_bytes = Vec::from_hex(&sig_str).ok()?;
+    let sig = ecdsa::sig_from_bytes(&sig_bytes).ok()?;
+    
+    let pk_bytes = Vec::from_hex(&pb_key_str).ok()?;
+    let pb_key = ecdsa::pb_key_from_bytes(&pk_bytes).ok()?;
+
+    // push the public key back onto the stack
+    stack.push(msg_str);
+
+    Some(ecdsa::valid_signature(secp, &msg, &sig, &pb_key))
 }
 
 pub fn eval(script: String) -> Option<Vec<String>> {
     let mut stack: Vec<String> = Vec::new();
+    let secp = ecdsa::create_secp();
 
     for val in script.split(" ") {
         if val == "" {
             continue;
         }
         if !match val.to_lowercase().as_str() {
-            "op_eq" => op_eq(&mut stack),
-            "to_addr" => to_addr(&mut stack),
-            "verify_sign" => verify_signature(&mut stack),
+            "eq" => op_eq(&mut stack).is_some(),
+            "to_addr" => to_addr(&mut stack).is_some(),
+            "verify_sig" => verify_signature(&mut stack, &secp).is_some(),
             _ => {
                 stack.push(val.to_string());
                 true
             }
         } {
-            log::error!("{}: {}", val, script);
+            log::debug!("Ivalid Script  at {}: {}", val, script);
             return None;
         }
     }
     Some(stack)
-}
-*/
-pub fn eval(_script: String) -> Option<Vec<String>> {
-    //TODO: implement this
-    Some(Vec::new())
 }

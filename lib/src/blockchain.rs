@@ -89,7 +89,7 @@ pub mod utils {
         bytes.extend(bincode::serialize(utxou.0)?);
         bytes.extend(bincode::serialize(utxou.1)?);
 
-        Ok(hashes::sha256(&bytes)?)
+        Ok(hashes::sha256(&bytes))
     }
 
     pub fn is_valid_tx(tx: &Transaction, store: &TxStore) -> bool {
@@ -106,7 +106,7 @@ pub mod utils {
                     if script::eval(format!(
                         "{} {} {}",
                         solution,
-                        utxou_hash.to_vec().to_hex(),
+                        utxou_hash.to_hex(),
                         lock
                     ))
                     .is_none()
@@ -194,7 +194,7 @@ impl Transaction {
         bytes.extend(bincode::serialize(&self.vin)?);
         bytes.extend(bincode::serialize(&self.vout)?);
 
-        Ok(hashes::sha256(&bytes)?)
+        Ok(hashes::sha256(&bytes))
     }
 
     pub fn vout_total(&self) -> u128 {
@@ -237,7 +237,7 @@ impl Block {
         bytes.extend(bincode::serialize(&nonce)?);
         bytes.extend(bincode::serialize(&self.transactions)?);
 
-        Ok(hashes::sha256(&bytes)?)
+        Ok(hashes::sha256(&bytes))
     }
 }
 
@@ -369,6 +369,8 @@ impl Blockchain {
             settings
         );
     }
+
+    // TODO: pub fn is_valid()
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
