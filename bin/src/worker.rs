@@ -218,6 +218,21 @@ fn prepare_transactions(data: &Data, transactions: &mut Vec<Transaction>) {
     transactions.push(coinbase_tx);
 }
 
+fn add_block(data: &Data, block: Block) {
+    let block_height = data
+        .blockchain
+        .read()
+        .expect("Couldn't lock blockchain for reading!")
+        .height();
+    debug!("Adding new block from miner!");
+
+    // TODO: localhost:port
+    data.i_blocks
+        .write()
+        .expect("Couldn't lock i_blocks for writing!")
+        .push(("".to_string(), block_height + 1, block));
+}
+
 async fn miner_thread(
     data: Data,
     mining_data: (Shared<bool>, Shared<Option<Block>>),
@@ -225,14 +240,16 @@ async fn miner_thread(
     previous: [u8; 32],
     mut transactions: Vec<Transaction>,
 ) {
-    let mut running = *data
-        .running
-        .read()
-        .expect("Couldn't read running for reading!");
     *mining_data
         .0
         .write()
         .expect("Couldn't lock mining_data.0 for writing!") = true;
+
+    let mut running = *data
+        .running
+        .read()
+        .expect("Couldn't read running for reading!");
+    
 
     // setup for coinbase transactions
     prepare_transactions(&data, &mut transactions);
@@ -299,21 +316,6 @@ async fn miner_thread(
         .0
         .write()
         .expect("Couldn't lock mining_data.0 for writing!") = false;
-}
-
-fn add_block(data: &Data, block: Block) {
-    let block_height = data
-        .blockchain
-        .read()
-        .expect("Couldn't lock blockchain for reading!")
-        .height();
-    debug!("Adding new block from miner!");
-
-    // TODO: localhost:port
-    data.i_blocks
-        .write()
-        .expect("Couldn't lock i_blocks for writing!")
-        .push(("".to_string(), block_height + 1, block));
 }
 
 fn handle_mining(
