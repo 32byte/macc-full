@@ -1,7 +1,11 @@
-use log::{debug, info, error};
-use macc_lib::{blockchain::{utils, Blockchain, TxStore, Block, Transaction, difficulty}, utils::current_time, ecdsa};
+use log::{debug, error, info};
+use macc_lib::{
+    blockchain::{difficulty, utils, Block, Blockchain, Transaction, TxStore},
+    ecdsa,
+    utils::current_time,
+};
 
-use crate::types::{Shared, share};
+use crate::types::{share, Shared};
 
 use super::types::Data;
 
@@ -68,10 +72,16 @@ fn process_blocks(data: &Data) -> bool {
         // or this block belongs to a blockchain with lenght + 1 but the blockchain
         // is not identical to this one
         if block_height > blockchain.height() + 1 || !block_valid_as_next {
-            debug!("{} has sent a block from a bigger or other blockchain!", node);
+            debug!(
+                "{} has sent a block from a bigger or other blockchain!",
+                node
+            );
             // request the blockchain from the node
             if let Some((bc, st, di)) = request_blockchain(&node) {
-                info!("{} has a bigger blockchain, this blockchain will be replaced!", node);
+                info!(
+                    "{} has a bigger blockchain, this blockchain will be replaced!",
+                    node
+                );
                 blockchain = bc;
                 store = st;
                 difficulty = di;
@@ -143,7 +153,7 @@ fn proces_transactions(data: &Data) -> bool {
         return false;
     }
     info!("Processing {} transactions!", i_transactions_len);
-    
+
     let mut mem_transactions = data
         .mem_transactions
         .read()
@@ -193,11 +203,15 @@ fn proces_transactions(data: &Data) -> bool {
 
 fn prepare_transactions(data: &Data, transactions: &mut Vec<Transaction>) {
     // get block height
-    let block_height = data.blockchain.read().expect("Couldn't lock blockchain for reading!").height();
+    let block_height = data
+        .blockchain
+        .read()
+        .expect("Couldn't lock blockchain for reading!")
+        .height();
     // calculate reward
     let reward = utils::calculate_mining_reward(block_height, &data.settings);
     // create lock
-    let lock = ecdsa::create_lock(&data.config.miner_client.pb_key);
+    let lock = ecdsa::create_lock_with_addr(&data.config.address);
     // create coinbase transaction
     let coinbase_tx = Transaction::new_coinbase(block_height, reward, lock);
 
@@ -206,18 +220,24 @@ fn prepare_transactions(data: &Data, transactions: &mut Vec<Transaction>) {
 }
 
 async fn miner_thread(
-    data: Data, 
+    data: Data,
     mining_data: (Shared<bool>, Shared<Option<Block>>),
     difficulty: [u8; 32],
     previous: [u8; 32],
-    mut transactions: Vec<Transaction>
+    mut transactions: Vec<Transaction>,
 ) {
-    let mut running = *data.running.read().expect("Couldn't read running for reading!");
-    *mining_data.0.write().expect("Couldn't lock mining_data.0 for writing!") = true;
+    let mut running = *data
+        .running
+        .read()
+        .expect("Couldn't read running for reading!");
+    *mining_data
+        .0
+        .write()
+        .expect("Couldn't lock mining_data.0 for writing!") = true;
 
     // setup for coinbase transactions
     prepare_transactions(&data, &mut transactions);
-    
+
     // nonce to bruteforce
     // TODO: start at a random position
     let mut nonce = 0_u128;
@@ -230,17 +250,21 @@ async fn miner_thread(
         // nonce is not found yet
         nonce,
         // transactions to be inlcuded in the block
-        transactions
+        transactions,
     };
 
     while running {
         // check if miner was stopped externally
-        if !*mining_data.0.read().expect("Couldn't lock mining_data.0 for reading!") {
+        if !*mining_data
+            .0
+            .read()
+            .expect("Couldn't lock mining_data.0 for reading!")
+        {
             // stop miner
             debug!("Miner was stopped externally!");
             return;
         }
-        
+
         // bruteforce nonce
         if let Ok(hash) = block.hash(Some(nonce)) {
             if difficulty::satisfies(&difficulty, &hash) {
@@ -257,50 +281,86 @@ async fn miner_thread(
         }
 
         // update running
-        running = *data.running.read().expect("Couldn't read running for reading!");
+        running = *data
+            .running
+            .read()
+            .expect("Couldn't read running for reading!");
     }
     // block was found
 
     // set nonce
     block.nonce = nonce;
     // set block
-    *mining_data.1.write().expect("Couldn't lock mining_data.1 for writing!") = Some(block);
+    *mining_data
+        .1
+        .write()
+        .expect("Couldn't lock mining_data.1 for writing!") = Some(block);
     // set running = false for miner
-    *mining_data.0.write().expect("Couldn't lock mining_data.0 for writing!") = false;
+    *mining_data
+        .0
+        .write()
+        .expect("Couldn't lock mining_data.0 for writing!") = false;
 }
 
 fn add_block(data: &Data, block: Block) {
-    let block_height = data.blockchain.read().expect("Couldn't lock blockchain for reading!").height();
+    let block_height = data
+        .blockchain
+        .read()
+        .expect("Couldn't lock blockchain for reading!")
+        .height();
     debug!("Adding new block from miner!");
 
     // TODO: localhost:port
-    data.i_blocks.write().expect("Couldn't lock i_blocks for writing!").push(("".to_string(), block_height + 1, block));
+    data.i_blocks
+        .write()
+        .expect("Couldn't lock i_blocks for writing!")
+        .push(("".to_string(), block_height + 1, block));
 }
 
-fn handle_mining(data: &Data, mining_data: &(Shared<bool>, Shared<Option<Block>>), state_modified: bool) {
-    let block = (*mining_data.1.read().expect("Couldn't lock mining_data.1 for writing!")).clone();
-    
+fn handle_mining(
+    data: &Data,
+    mining_data: &(Shared<bool>, Shared<Option<Block>>),
+    state_modified: bool,
+) {
+    let block = (*mining_data
+        .1
+        .read()
+        .expect("Couldn't lock mining_data.1 for writing!"))
+    .clone();
+
     // the state was modified
     if state_modified {
         info!("The state was modified, miner restarting!");
         // restart miner
-        *mining_data.0.write().expect("Couldn't lock mining_data.0 for writing!") = false;
+        *mining_data
+            .0
+            .write()
+            .expect("Couldn't lock mining_data.0 for writing!") = false;
     }
 
     // check if miner finished
     if let Some(b) = block {
         info!("Miner has found a new block with the nonce: {}!", b.nonce);
         // push block as incoming
-        add_block(data,b);
+        add_block(data, b);
         // clear block the miner found
-        *mining_data.0.write().expect("Couldn't lock mining_data.0 for writing!") = false;
-        *mining_data.1.write().expect("Couldn't lock mining_data.1 for writing!") = None;
+        *mining_data
+            .0
+            .write()
+            .expect("Couldn't lock mining_data.0 for writing!") = false;
+        *mining_data
+            .1
+            .write()
+            .expect("Couldn't lock mining_data.1 for writing!") = None;
         // you don't want to instantly start miner after he found a block
         // since you need to first wait until the block is added to the blockchain
         return;
     }
 
-    let miner_running = *mining_data.0.read().expect("Couldn't lock mining_data.0 for writing!");
+    let miner_running = *mining_data
+        .0
+        .read()
+        .expect("Couldn't lock mining_data.0 for writing!");
 
     // check if miner is running
     if !miner_running {
@@ -322,7 +382,10 @@ fn handle_mining(data: &Data, mining_data: &(Shared<bool>, Shared<Option<Block>>
         let previous = if blockchain.height() == 0 {
             [0x00_u8; 32]
         } else {
-            blockchain.at(-1).hash(None).expect("Block in the blockchain couldn't be hashed!")
+            blockchain
+                .at(-1)
+                .hash(None)
+                .expect("Block in the blockchain couldn't be hashed!")
         };
         let transactions = data
             .mem_transactions
@@ -332,12 +395,21 @@ fn handle_mining(data: &Data, mining_data: &(Shared<bool>, Shared<Option<Block>>
 
         info!("Starting miner at block_height={}!", blockchain.height());
         // start miner
-        tokio::spawn(miner_thread(data.clone(), mining_data.clone(), difficulty, previous, transactions));
+        tokio::spawn(miner_thread(
+            data.clone(),
+            mining_data.clone(),
+            difficulty,
+            previous,
+            transactions,
+        ));
     }
 }
 
 pub async fn start(data: Data) {
-    let mut running = *data.running.read().expect("Couldn't read running for reading!");
+    let mut running = *data
+        .running
+        .read()
+        .expect("Couldn't read running for reading!");
     let mining_data: (Shared<bool>, Shared<Option<Block>>) = (share(false), share(None));
 
     info!("Starting worker thread!");
@@ -352,7 +424,10 @@ pub async fn start(data: Data) {
         tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
         // update running
-        running = *data.running.read().expect("Couldn't read running for reading!");
+        running = *data
+            .running
+            .read()
+            .expect("Couldn't read running for reading!");
     }
 
     // shutdown requested

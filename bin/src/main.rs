@@ -12,6 +12,8 @@ use types::Data;
 
 mod worker;
 
+// TODO: examples for generating pb-key, sk-key, address; sending transactions; etc
+
 static LOGGER: CustomLogger = CustomLogger;
 fn main() {
     // TODO: parse commandline args
@@ -61,6 +63,12 @@ fn main() {
         }
 
         // TODO: serialize and save data
+
+        // save config
+        // TODO: handle the modified version probably save somewhere else
+        data.config
+            .save("config.json")
+            .expect("Couldn't save config!");
 
         let _ = tokio::join!(h_worker);
     });
