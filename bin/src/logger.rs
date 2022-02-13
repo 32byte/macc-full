@@ -1,7 +1,8 @@
 use log::{Level, Metadata, Record};
 
-#[cfg(not(target_os = "windows"))]
-use termion::color;
+// TODO: implement colorful logging windows and linux
+// #[cfg(not(target_os = "windows"))]
+// use termion::color;
 
 pub struct CustomLogger;
 
@@ -12,7 +13,7 @@ impl log::Log for CustomLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            let color: String = self.get_prefix_color(record);
+            let color = ""; //self.get_prefix_color(record);
 
             let time = chrono::Utc::now().format("[%H:%M:%S %3f]").to_string();
 
@@ -23,6 +24,7 @@ impl log::Log for CustomLogger {
     fn flush(&self) {}
 }
 
+/*
 impl CustomLogger {
     #[cfg(target_os = "windows")]
     fn get_prefix_color(&self, _metadata: &Record) -> String {
@@ -40,3 +42,4 @@ impl CustomLogger {
         }
     }
 }
+ */
