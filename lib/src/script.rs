@@ -49,8 +49,8 @@ pub fn eval(script: String) -> Option<Vec<String>> {
     let mut stack: Vec<String> = Vec::new();
     let secp = ecdsa::create_secp();
 
-    for val in script.split(" ") {
-        if val == "" {
+    for val in script.split(' ') {
+        if val.is_empty() {
             continue;
         }
         if !match val.to_lowercase().as_str() {

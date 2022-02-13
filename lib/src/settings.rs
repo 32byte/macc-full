@@ -22,14 +22,14 @@ impl Settings {
         crypto_precision: u32,
     ) -> Self {
         Self {
-            target_time: target_time,
-            adjustment_interval: adjustment_interval,
-            precision: precision,
+            target_time,
+            adjustment_interval,
+            precision,
 
-            halvings_interval: halvings_interval,
-            start_mining_reward: start_mining_reward,
+            halvings_interval,
+            start_mining_reward,
 
-            crypto_precision: crypto_precision,
+            crypto_precision,
         }
     }
 }
@@ -46,7 +46,7 @@ impl Default for Settings {
             halvings_interval: 10_000,
             start_mining_reward: 100_u128 * 10_u32.pow(crypto_precision) as u128,
 
-            crypto_precision: crypto_precision,
+            crypto_precision,
         }
     }
 }

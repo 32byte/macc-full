@@ -33,7 +33,7 @@ impl Client {
         let (sk_key, pk_key) = secp.generate_keypair(rng);
 
         Self {
-            sk_key: sk_key,
+            sk_key,
             pb_key: pk_key,
             nonce: 0,
         }
@@ -80,9 +80,9 @@ impl Client {
         // create transaction
         let tx = Transaction {
             nonce: self.nonce,
-            vin: vin,
+            vin,
 
-            vout: vout,
+            vout,
         };
         // update nonce
         self.nonce += 1;
@@ -105,11 +105,11 @@ pub fn sig_from_bytes(bytes: &[u8]) -> Result<Signature, Box<dyn Error>> {
 }
 
 pub fn pb_key_from_bytes(bytes: &[u8]) -> Result<PublicKey, Box<dyn Error>> {
-    Ok(PublicKey::from_slice(&bytes)?)
+    Ok(PublicKey::from_slice(bytes)?)
 }
 
-pub fn pb_key_to_addr(pk: &Vec<u8>) -> String {
-    let mut address = hashes::ripemd160(&hashes::sha256(&pk).to_vec());
+pub fn pb_key_to_addr(pk: &[u8]) -> String {
+    let mut address = hashes::ripemd160(&hashes::sha256(pk).to_vec());
     // prepend 0x00
     address.insert(0, 0u8);
     // append checksum
@@ -124,7 +124,7 @@ pub fn valid_signature(
     signature: &Signature,
     pk_key: &PublicKey,
 ) -> bool {
-    secp.verify_ecdsa(&message, signature, pk_key).is_ok()
+    secp.verify_ecdsa(message, signature, pk_key).is_ok()
 }
 
 // NOTE: this is just my standart, the script technically allows for more complex locks

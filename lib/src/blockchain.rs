@@ -265,20 +265,20 @@ impl Blockchain {
     ) -> Option<bool> {
         // validate timestamp
         // doesn't need validation if first block
-        if self.0.len() > 0 && block.timestamp < (self.0.last()?).timestamp {
+        if !self.0.is_empty() && block.timestamp < (self.0.last()?).timestamp {
             debug!("Invalid timestamp!");
             return Some(false);
         }
 
         // validate previous
         // doesn't need validation if first block
-        if self.0.len() > 0 && block.previous != (self.0.last()?).hash(None).ok()? {
+        if !self.0.is_empty() && block.previous != (self.0.last()?).hash(None).ok()? {
             debug!("Invalid previous hash!");
             return Some(false);
         }
 
         // validate nonce
-        if !difficulty::satisfies(&difficulty, &block.hash(None).ok()?) {
+        if !difficulty::satisfies(difficulty, &block.hash(None).ok()?) {
             debug!("Invalid nonce!");
             return Some(false);
         }
@@ -290,7 +290,7 @@ impl Blockchain {
 
         for tx in &block.transactions {
             // possible coinbase transaction
-            if tx.vin.len() == 0 {
+            if tx.vin.is_empty() {
                 // check if there wasn't already a coinbase transaction
                 if coinbase_tx.is_some() {
                     debug!("Two coinbase transactions found!");
@@ -390,7 +390,7 @@ impl TxStore {
         if let Some(map) = self.0.get_mut(&key) {
             map.remove(index);
 
-            if map.len() == 0 {
+            if map.is_empty() {
                 self.0.remove(&key);
             }
         }
