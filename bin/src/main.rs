@@ -1,7 +1,11 @@
-use macc_lib::ecdsa::{create_secp, create_rng, Client};
+use clap::Parser;
+use macc_lib::{
+    ecdsa::{create_rng, create_secp, pb_key_from_bytes, Client},
+    hex::{FromHex, ToHex},
+    PublicKey,
+};
 use tokio::runtime::Runtime;
 use tokio::signal;
-use clap::Parser;
 
 mod logger;
 use logger::CustomLogger;
@@ -62,9 +66,7 @@ fn start_node(config: &str) {
 
         // save config
         // TODO: handle the modified version probably save somewhere else
-        data.config
-            .save()
-            .expect("Couldn't save config!");
+        data.config.save().expect("Couldn't save config!");
 
         let _ = tokio::join!(h_worker);
     });
@@ -84,7 +86,60 @@ fn generate_client_json(save: &Option<String>) {
     } else {
         println!("{}", json);
     }
+}
 
+fn create_transaction(client_json: &str, vin: &str, vout: &str) {
+    let mut client: Client = serde_json::from_str(
+        &std::fs::read_to_string(client_json).expect("Could't find the client json!"),
+    )
+    .expect("Invalid client json!");
+
+    println!("{}", serde_json::to_string(&[("hello".to_string(), 2_usize)]).unwrap());
+
+    let vin: Vec<(String, usize)> = serde_json::from_str(vin).expect("Couldn't parse input!");
+    let vin: Vec<([u8; 32], usize)> = vin
+        .iter()
+        .map(|(hex, index)| {
+            let hash: [u8; 32] = Vec::from_hex(hex)
+                .expect("Couldn't parse the hash as hex")
+                .try_into()
+                .expect("hash is the wrong lenght!");
+            (hash, *index)
+        })
+        .collect();
+
+    let vout: Vec<(u128, String)> = serde_json::from_str(vout).expect("Couldn't parse output!");
+    let vout: Vec<(u128, PublicKey)> = vout
+        .iter()
+        .map(|(amount, pb_key)| {
+            let pb_key =
+                pb_key_from_bytes(&Vec::from_hex(pb_key).expect("Couldn't parse pb_key as hex!"))
+                    .expect("Couldn't parse pb_key!");
+            (*amount, pb_key)
+        })
+        .collect();
+
+    let secp = create_secp();
+
+    let tx = client
+        .create_transaction(&secp, vin, vout)
+        .expect("Couldn't create the transaction!");
+
+    println!(
+        "Transaction created with hash: {}",
+        tx.hash().expect("Couldn't hash the transaction!").to_hex()
+    );
+    println!("");
+    println!(
+        "{}",
+        serde_json::to_string(&tx).expect("Couldn't serialize the transaction!")
+    );
+
+    std::fs::write(
+        client_json,
+        &serde_json::to_string(&client).expect("Couldn't serialize client!"),
+    )
+    .expect("Couldn't update client json");
 }
 
 fn main() {
@@ -96,7 +151,12 @@ fn main() {
         .expect("Couldn't set the logger!");
 
     match &args.command {
-        Command::RunNode { config} => start_node(config),
-        Command::GenerateClientJson { save} => generate_client_json(save)
+        Command::RunNode { config } => start_node(config),
+        Command::GenerateClientJson { save } => generate_client_json(save),
+        Command::CreateTransaction {
+            client_json,
+            vin,
+            vout,
+        } => create_transaction(client_json, vin, vout),
     }
 }

@@ -8,12 +8,20 @@ pub enum Command {
     },
 
     GenerateClientJson {
-        #[clap(short, long, help="Path to store the json")]
-        save: Option<String>
+        #[clap(short, long, help = "Path to store the json")]
+        save: Option<String>,
     },
 
-    // TODO: create transaction
+    CreateTransaction {
+        #[clap(short, long, help = "Path to the client json")]
+        client_json: String,
 
+        #[clap(long, help = "Input in json format")]
+        vin: String,
+
+        #[clap(long, help = "Output in json format")]
+        vout: String,
+    },
     // TODO: get mine?
 }
 
