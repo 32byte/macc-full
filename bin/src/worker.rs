@@ -44,11 +44,10 @@ fn process_blocks(data: &Data) -> bool {
         .expect("Couldn't lock blockchain for reading!")
         .clone();
     // clone the current difficulty
-    let mut difficulty = data
+    let mut difficulty = *data
         .difficulty
         .read()
-        .expect("Couldn't lock blockchain for reading!")
-        .clone();
+        .expect("Couldn't lock blockchain for reading!");
 
     let mut modified = false;
 
@@ -371,11 +370,10 @@ fn handle_mining(
             .read()
             .expect("Couldn't lock blockchain for reading!")
             .clone();
-        let difficulty = data
+        let difficulty = *data
             .difficulty
             .read()
-            .expect("Couldn't lock difficulty for reading!")
-            .clone();
+            .expect("Couldn't lock difficulty for reading!");
         // adjust difficulty for the new block
         let difficulty = blockchain.adjust_difficulty(difficulty, &data.settings);
         // get the previous has (also handle if this will be the first block to be mined)

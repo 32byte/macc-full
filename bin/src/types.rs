@@ -55,15 +55,15 @@ impl Data {
             running: share(running),
             settings: settings.unwrap_or_default(),
             config,
-            blockchain: share(blockchain.unwrap_or(Blockchain::new_empty())),
-            store: share(store.unwrap_or(TxStore::new_empty())),
+            blockchain: share(blockchain.unwrap_or_else(Blockchain::new_empty)),
+            store: share(store.unwrap_or_else(TxStore::new_empty)),
             difficulty: share(if let Some(diff) = difficulty {
                 diff
             } else {
                 settings.unwrap_or_default().start_difficulty
             }),
-            i_blocks: share(i_blocks.unwrap_or(Vec::new())),
-            i_transactions: share(i_transactions.unwrap_or(Vec::new())),
+            i_blocks: share(i_blocks.unwrap_or_default()),
+            i_transactions: share(i_transactions.unwrap_or_default()),
 
             // NICE-TO-HAVE: maybe serialize this?
             mem_transactions: share(Vec::new()),
