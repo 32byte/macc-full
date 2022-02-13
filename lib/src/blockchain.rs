@@ -1,15 +1,28 @@
-use std::{error::Error, collections::HashMap};
+use std::{collections::HashMap, error::Error};
 
 use serde::{Deserialize, Serialize};
 
-use crate::{hashes, utils::arr_to_bi};
+use crate::{hashes, utils::arr_to_bi, settings::Settings};
 
-use self::utils::{is_valid_tx, calculate_mining_reward};
+use self::utils::{calculate_mining_reward, is_valid_tx};
+
+// logging
+// NICE-TO-HAVE: fix this
+// NOTE: it should work with the #[cfg] but somehow it doesnt
+//       it always uses the log::debug
+// https://stackoverflow.com/questions/67087597/is-it-possible-to-use-rusts-log-info-for-tests
+// #[cfg(not(test))] 
+use log::debug; // Use log crate when building application
+// #[cfg(test)]
+// use std::{println as debug}; // Workaround to use prinltn! for logs.
 
 pub mod difficulty {
-    use std::{io::{Error, ErrorKind}, vec};
+    use std::{
+        io::{Error, ErrorKind},
+        vec,
+    };
 
-    use crate::utils::{bi_to_arr, arr_to_bi};
+    use crate::{utils::{arr_to_bi, bi_to_arr}, settings::Settings};
 
     // create a difficulty array
     pub fn create(num_zeros: usize) -> Result<[u8; 32], Error> {
@@ -45,20 +58,18 @@ pub mod difficulty {
 
     // will adjust the difficulty to try to reach target block time
     pub fn adjusted(
-        current: &[u8; 32], 
+        current: &[u8; 32],
         time_interval: u64,
-        target_time: u64,
-        adjustment_interval: u32,
-        precision: u32,
+        settings: &Settings
     ) -> [u8; 32] {
         // calculate the current ratio
-        let ratio = ((target_time * adjustment_interval as u64) as f64) / (time_interval as f64);
+        let ratio = ((settings.target_time * settings.adjustment_interval as u64) as f64) / (time_interval as f64);
 
         // convert difficulty to bigint for easier calculations
         let mut diff_bi = arr_to_bi(current);
         // divide first to avoid buffer overflow
-        diff_bi /= (ratio * (10u64.pow(precision) as f64)) as u64;
-        diff_bi *= 10u64.pow(precision);
+        diff_bi /= (ratio * (10u64.pow(settings.precision) as f64)) as u64;
+        diff_bi *= 10u64.pow(settings.precision);
 
         bi_to_arr(&diff_bi)
     }
@@ -68,11 +79,12 @@ pub mod utils {
     use std::error::Error;
 
     use crate::hex::ToHex;
-    use crate::{script, hashes};
+    use crate::settings::Settings;
+    use crate::{hashes, script};
 
-    use super::{Transaction, TxStore};
+    use super::{Transaction, TxStore, debug};
 
-    pub fn hash_utxou(utxou: (&[u8; 32], &usize)) -> Result<[u8; 32], Box<dyn Error>>  {
+    pub fn hash_utxou(utxou: (&[u8; 32], &usize)) -> Result<[u8; 32], Box<dyn Error>> {
         let mut bytes: Vec<u8> = Vec::new();
         bytes.extend(bincode::serialize(utxou.0)?);
         bytes.extend(bincode::serialize(utxou.1)?);
@@ -97,20 +109,24 @@ pub mod utils {
                         utxou_hash.to_vec().to_hex(),
                         lock
                     ))
-                    .is_none() {
+                    .is_none()
+                    {
+                        debug!("Invalid solution!");
                         return false;
                     }
 
                     vin_total += value;
                 } else {
+                    debug!("Couldn't hash utxou!");
                     return false;
                 }
             } else {
+                debug!("UTXO not found!");
                 return false;
             }
         }
 
-        vin_total < vout_total
+        vin_total >= vout_total
     }
 
     pub fn add_tx_to_store(tx: &Transaction, store: &mut TxStore) {
@@ -121,21 +137,24 @@ pub mod utils {
 
         // add new utxo's
         for (index, utxo) in tx.vout.iter().enumerate() {
-            store.set(&tx.hash().expect("Transaction couldn't be hashed!"), index, utxo.clone());
+            store.set(
+                &tx.hash().expect("Transaction couldn't be hashed!"),
+                index,
+                utxo.clone(),
+            );
         }
     }
 
     pub fn calculate_mining_reward(
-        block_height: usize, 
-        halvings_interval: usize,
-        start_mining_reward: u128
+        block_height: usize,
+        settings: &Settings
     ) -> u128 {
         // based on formula reward = floor( start_reward / 2^( floor(block_height / halving_interval) ) )
         // https://www.desmos.com/calculator
-    
-        let num_halvings = (block_height / halvings_interval) as u32;
-    
-        start_mining_reward / 2_i32.pow(num_halvings) as u128
+
+        let num_halvings = (block_height / settings.halvings_interval) as u32;
+
+        settings.start_mining_reward / 2_i32.pow(num_halvings) as u128
     }
 }
 
@@ -161,6 +180,14 @@ pub struct Transaction {
 }
 
 impl Transaction {
+    pub fn new_coinbase(block_height: usize, reward: u128, lock: String) -> Self {
+        Self {
+            nonce: block_height as u128,
+            vin: vec![],
+            vout: vec![(reward, lock)]
+        }
+    }
+
     pub fn hash(&self) -> Result<[u8; 32], Box<dyn Error>> {
         let mut bytes: Vec<u8> = Vec::new();
         bytes.extend(bincode::serialize(&self.nonce)?);
@@ -172,6 +199,16 @@ impl Transaction {
 
     pub fn vout_total(&self) -> u128 {
         self.vout.iter().map(|utxo| utxo.0).sum()
+    }
+
+    pub fn vin_total(&self, store: &TxStore) -> Option<u128> {
+        let mut total = 0_u128;
+
+        for (hash, index, _) in &self.vin {
+            total += store.get(hash, index)?.0
+        }
+        
+        Some(total)
     }
 }
 
@@ -217,7 +254,7 @@ impl Blockchain {
         self.0.len()
     }
 
-    fn at(&self, i: i32) -> &Block {
+    pub fn at(&self, i: i32) -> &Block {
         let idx: usize = if i < 0 {
             self.height() - i.abs() as usize
         } else {
@@ -227,34 +264,36 @@ impl Blockchain {
     }
 
     pub fn valid_next(
-        &self, 
-        block: &Block, 
-        store: &TxStore, 
-        difficulty: &[u8; 32], 
-        block_height: usize, 
-        halvings_interval: usize,
-        start_mining_reward: u128
+        &self,
+        block: &Block,
+        store: &TxStore,
+        difficulty: &[u8; 32],
+        settings: &Settings
     ) -> Option<bool> {
         // validate timestamp
         // doesn't need validation if first block
         if self.0.len() > 0 && block.timestamp < (self.0.last()?).timestamp {
+            debug!("Invalid timestamp!");
             return Some(false);
         }
 
         // validate previous
         // doesn't need validation if first block
         if self.0.len() > 0 && block.previous != (self.0.last()?).hash(None).ok()? {
+            debug!("Invalid previous hash!");
             return Some(false);
         }
 
         // validate nonce
         if !difficulty::satisfies(&difficulty, &block.hash(None).ok()?) {
+            debug!("Invalid nonce!");
             return Some(false);
         }
 
         // validate transaction
         let mut coinbase_tx: Option<Transaction> = None;
-        let mining_reward = calculate_mining_reward(block_height, halvings_interval, start_mining_reward);
+        let mining_reward =
+            calculate_mining_reward(self.height(), settings);
         let mut fees = 0_u128;
 
         for tx in &block.transactions {
@@ -262,6 +301,14 @@ impl Blockchain {
             if tx.vin.len() == 0 {
                 // check if there wasn't already a coinbase transaction
                 if coinbase_tx.is_some() {
+                    debug!("Two coinbase transactions found!");
+                    return Some(false);
+                }
+
+                // so that every new coinbase transaction gets a new hash
+                // it is set that the nonce is the block_height
+                if tx.nonce != self.height() as u128 {
+                    debug!("Invalid coinbase nonce!");
                     return Some(false);
                 }
 
@@ -272,16 +319,18 @@ impl Blockchain {
 
             // check if transaction valid
             if !is_valid_tx(tx, store) {
+                debug!("Invalid transaction!");
                 return Some(false);
             }
 
             // add fees
-            // TODO: fees += tx.vin_total() - tx.vout_total()
+            fees += tx.vin_total(store)? - tx.vout_total();
         }
 
         // check if reward isn't too high
         if let Some(tx) = coinbase_tx {
             if tx.vout_total() > mining_reward + fees {
+                debug!("Invalid coinbase transaction reward!");
                 return Some(false);
             }
         }
@@ -290,7 +339,7 @@ impl Blockchain {
     }
 
     // adds a block to the blockchain
-    // doesn't check if the block is valid, 
+    // doesn't check if the block is valid,
     // so run valid_next(block) first
     pub fn add(&mut self, store: &mut TxStore, block: Block) {
         for tx in &block.transactions {
@@ -301,26 +350,23 @@ impl Blockchain {
     }
 
     pub fn adjust_difficulty(
-        &self, 
+        &self,
         difficulty: &mut [u8; 32],
-        target_time: u64,
-        adjustment_interval: u32,
-        precision: u32,
+        settings: &Settings
     ) {
-        if (self.height() as u32) < adjustment_interval ||
-            (self.height() as u32)  % adjustment_interval != 0
+        if (self.height() as u32) < settings.adjustment_interval
+            || (self.height() as u32) % settings.adjustment_interval != 0
         {
-            return;   
+            return;
         }
 
-        let time_interval = self.at(-1).timestamp - self.at(-(adjustment_interval as i32)).timestamp;
+        let time_interval =
+            self.at(-1).timestamp - self.at(-(settings.adjustment_interval as i32)).timestamp;
 
         *difficulty = difficulty::adjusted(
-            difficulty, 
-            time_interval, 
-            target_time, 
-            adjustment_interval, 
-            precision
+            difficulty,
+            time_interval,
+            settings
         );
     }
 }
@@ -339,12 +385,15 @@ impl TxStore {
 
     pub fn set(&mut self, hash: &[u8; 32], index: usize, utxo: (u128, String)) {
         let key = &arr_to_bi(hash).to_string();
-        
+
         if self.0.get_mut(key).is_none() {
             self.0.insert(key.clone(), HashMap::new());
         }
 
-        self.0.get_mut(key).expect("UNREACHABLE!").insert(index, utxo);
+        self.0
+            .get_mut(key)
+            .expect("UNREACHABLE!")
+            .insert(index, utxo);
     }
 
     pub fn remove(&mut self, hash: &[u8; 32], index: &usize) {

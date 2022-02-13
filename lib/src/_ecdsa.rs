@@ -1,3 +1,6 @@
+// TODO: create helper functions
+// TODO: create "client"
+/*
 use crate::blockchain::transaction::UTXOU;
 use crate::hashes;
 
