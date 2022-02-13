@@ -109,6 +109,10 @@ pub fn pb_key_from_bytes(bytes: &[u8]) -> Result<PublicKey, Box<dyn Error>> {
     Ok(PublicKey::from_slice(bytes)?)
 }
 
+pub fn sk_key_from_bytes(bytes: &[u8]) -> Result<SecretKey, Box<dyn Error>> {
+    Ok(SecretKey::from_slice(bytes)?)
+}
+
 pub fn pb_key_to_addr(pk: &[u8]) -> String {
     let mut address = hashes::ripemd160(&hashes::sha256(pk).to_vec());
     // prepend 0x00
@@ -134,6 +138,11 @@ pub fn create_lock(pb_key: &PublicKey) -> String {
     let my_addr = pb_key_to_addr(&pb_key.serialize().to_vec());
     // standart lock format
     format!("verify_sig to_addr {} eq", my_addr)
+}
+
+pub fn create_lock_with_addr(address: &String) -> String {
+    // standart lock format
+    format!("verify_sig to_addr {} eq", address)
 }
 
 // NOTE: this is just my standart, the script technically allows for more complex locks
