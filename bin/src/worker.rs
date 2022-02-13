@@ -249,7 +249,6 @@ async fn miner_thread(
         .running
         .read()
         .expect("Couldn't read running for reading!");
-    
 
     // setup for coinbase transactions
     prepare_transactions(&data, &mut transactions);

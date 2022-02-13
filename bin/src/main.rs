@@ -1,5 +1,7 @@
+use macc_lib::ecdsa::{create_secp, create_rng, Client};
 use tokio::runtime::Runtime;
 use tokio::signal;
+use clap::Parser;
 
 mod logger;
 use logger::CustomLogger;
@@ -10,26 +12,20 @@ use config::Config;
 mod types;
 use types::Data;
 
+mod args;
+use args::{Args, Command};
+
 mod worker;
 
-// TODO: examples for generating pb-key, sk-key, address; sending transactions; etc
-
 static LOGGER: CustomLogger = CustomLogger;
-fn main() {
-    // TODO: parse commandline args
 
-    // set my logger
-    log::set_logger(&LOGGER)
-        .map(|()| log::set_max_level(log::LevelFilter::Debug))
-        .expect("Couldn't set the logger!");
-
+fn start_node(config: &str) {
     // create tokio runtime
     let rt: Runtime = Runtime::new().expect("Couldn't create tokio runtime!");
 
     rt.block_on(async {
         // create config
-        // TODO: use path from args
-        let config = Config::new(Some("config.json"));
+        let config = Config::new(config);
 
         // create shared data
         // TODO: deserialize data
@@ -67,9 +63,40 @@ fn main() {
         // save config
         // TODO: handle the modified version probably save somewhere else
         data.config
-            .save("config.json")
+            .save()
             .expect("Couldn't save config!");
 
         let _ = tokio::join!(h_worker);
     });
+}
+
+fn generate_client_json(save: &Option<String>) {
+    let secp = create_secp();
+    let mut rng = create_rng().expect("Couldn't create OsRng!");
+
+    let client = Client::new_random(&secp, &mut rng);
+
+    let json = serde_json::to_string(&client).expect("Couldn't serialize client!");
+
+    if let Some(path) = save {
+        std::fs::write(path, &json).expect(&format!("Couldn't write to {}!", path));
+        println!("Wrote client json to `{}`!", path);
+    } else {
+        println!("{}", json);
+    }
+
+}
+
+fn main() {
+    let args = Args::parse();
+
+    // set my logger
+    log::set_logger(&LOGGER)
+        .map(|()| log::set_max_level(log::LevelFilter::Debug))
+        .expect("Couldn't set the logger!");
+
+    match &args.command {
+        Command::RunNode { config} => start_node(config),
+        Command::GenerateClientJson { save} => generate_client_json(save)
+    }
 }

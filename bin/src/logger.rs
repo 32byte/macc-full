@@ -1,5 +1,5 @@
-use log::{Level, Metadata, Record};
 use colored::*;
+use log::{Level, Metadata, Record};
 
 pub struct CustomLogger;
 
@@ -12,7 +12,10 @@ impl log::Log for CustomLogger {
         if self.enabled(record.metadata()) {
             let time = chrono::Utc::now().format("[%H:%M:%S %3f]").to_string();
 
-            println!("{}", color_text(format!("{} {}", time, record.args()), record));
+            println!(
+                "{}",
+                color_text(format!("{} {}", time, record.args()), record)
+            );
         }
     }
 

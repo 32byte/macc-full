@@ -9,17 +9,27 @@ pub struct Config {
     pub address: String,
     pub data_file: String,
     pub trusted_nodes: Vec<String>,
+
+    #[serde(skip)]
+    path: String,
 }
 
 impl Config {
-    pub fn new(config_path: Option<&str>) -> Self {
-        if let Some(path) = config_path {
-            let c = Config::load(path).expect("Couldn't read config file!");
-            log::info!("Loaded config from file!");
-            c
+    pub fn new(path: &str) -> Self {
+        if let Ok(config) = Config::load(path) {
+            Config {
+                path: path.to_string(),
+
+                ..config
+            }
         } else {
-            log::info!("Loaded default config!");
-            Config::default()
+            log::warn!("Config does not exist, creating a new one!");
+
+            Config {
+                path: path.to_string(),
+
+                ..Default::default()
+            }
         }
     }
 
@@ -27,8 +37,8 @@ impl Config {
         Ok(serde_json::from_str(&fs::read_to_string(path)?)?)
     }
 
-    pub fn save(&self, path: &str) -> std::io::Result<()> {
-        fs::write(path, serde_json::to_string(self)?)
+    pub fn save(&self) -> std::io::Result<()> {
+        fs::write(&self.path, serde_json::to_string(self)?)
     }
 }
 
@@ -39,6 +49,8 @@ impl Default for Config {
             address: "your_address".to_string(),
             data_file: "node.dat".to_string(),
             trusted_nodes: Vec::new(),
+
+            path: "config.json".to_string(),
         }
     }
 }
