@@ -1,9 +1,14 @@
+use bitcoin_hashes::hex::FromHex;
 use bitcoin_hashes::sha256;
 use rand::rngs::OsRng;
 use secp256k1::ecdsa::Signature;
 use secp256k1::rand;
 use secp256k1::{All, Message, PublicKey, Secp256k1, SecretKey};
+use serde::Serialize;
+use serde::ser::SerializeStruct;
 use std::error::Error;
+use serde::de::{self, Deserialize, Deserializer, Visitor, SeqAccess, MapAccess};
+use std::fmt;
 
 use crate::blockchain::utils::hash_utxou;
 use crate::blockchain::Transaction;
@@ -21,7 +26,7 @@ pub fn create_rng() -> Result<OsRng, rand::Error> {
 }
 
 // client with wrapper & helper functions
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Client {
     pub pb_key: PublicKey,
     pub sk_key: SecretKey,
@@ -29,7 +34,131 @@ pub struct Client {
     nonce: u128,
 }
 
+impl Serialize for Client {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+            S: serde::Serializer {
+        let mut state = serializer.serialize_struct("Client", 3)?;
+
+        state.serialize_field("sk_key", &self.sk_key.serialize_secret().to_hex())?;
+        state.serialize_field("pb_key", &self.pb_key.to_hex())?;
+        state.serialize_field("nonce", &self.nonce)?;
+        
+        state.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for Client {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[allow(non_camel_case_types)]
+        enum Field { Sk_Key, Pb_Key, Nonce }
+
+        impl<'de> Deserialize<'de> for Field {
+            fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
+            where
+                D: Deserializer<'de>,
+            {
+                struct FieldVisitor;
+
+                impl<'de> Visitor<'de> for FieldVisitor {
+                    type Value = Field;
+
+                    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                        formatter.write_str("`pb_key` or `sk_key` or `nonce`")
+                    }
+
+                    fn visit_str<E>(self, value: &str) -> Result<Field, E>
+                    where
+                        E: de::Error,
+                    {
+                        match value {
+                            "pb_key" => Ok(Field::Pb_Key),
+                            "sk_key" => Ok(Field::Sk_Key),
+                            "nonce" => Ok(Field::Nonce),
+                            _ => Err(de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+
+                deserializer.deserialize_identifier(FieldVisitor)
+            }
+        }
+
+        struct ClientVisitor;
+
+        impl<'de> Visitor<'de> for ClientVisitor {
+            type Value = Client;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct Client")
+            }
+
+            fn visit_seq<V>(self, mut seq: V) -> Result<Client, V::Error>
+            where
+                V: SeqAccess<'de>,
+            {
+                let sk_key = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let pb_key = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                let nonce = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(2, &self))?;
+                Ok(Client::new(sk_key, pb_key, nonce).expect("sk_key or pb_key are wrong!"))
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<Client, V::Error>
+            where
+                V: MapAccess<'de>,
+            {
+                let mut sk_key = None;
+                let mut pb_key = None;
+                let mut nonce = None;
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Sk_Key => {
+                            if sk_key.is_some() {
+                                return Err(de::Error::duplicate_field("sk_key"));
+                            }
+                            sk_key = Some(map.next_value()?);
+                        }
+                        Field::Pb_Key => {
+                            if pb_key.is_some() {
+                                return Err(de::Error::duplicate_field("pb_key"));
+                            }
+                            pb_key = Some(map.next_value()?);
+                        }
+                        Field::Nonce => {
+                            if nonce.is_some() {
+                                return Err(de::Error::duplicate_field("nonce"));
+                            }
+                            nonce = Some(map.next_value()?);
+                        }
+                    }
+                }
+                let sk_key = sk_key.ok_or_else(|| de::Error::missing_field("sk_key"))?;
+                let pb_key = pb_key.ok_or_else(|| de::Error::missing_field("pb_key"))?;
+                let nonce = nonce.ok_or_else(|| de::Error::missing_field("nonce"))?;
+                Ok(Client::new(sk_key, pb_key, nonce).expect("sk_key or pb_key are wrong!"))
+            }
+        }
+
+        const FIELDS: &'static [&'static str] = &["sk_key", "pb_key", "nonce"];
+        deserializer.deserialize_struct("Client", FIELDS, ClientVisitor)
+    }
+}
+
 impl Client {
+    pub fn new(sk_key: String, pb_key: String, nonce: u128) -> Result<Self, Box<dyn Error>> {
+        Ok(Self {
+            sk_key: sk_key_from_bytes(&Vec::from_hex(&sk_key)?)?,
+            pb_key: pb_key_from_bytes(&Vec::from_hex(&pb_key)?)?,
+            nonce,
+        })
+    }
+
     pub fn new_random(secp: &Secp256k1<All>, rng: &mut OsRng) -> Self {
         let (sk_key, pk_key) = secp.generate_keypair(rng);
 
