@@ -43,7 +43,7 @@ fn main() {
         // handle ctrl+c
         match signal::ctrl_c().await {
             Ok(()) => {
-                log::info!("Shutting down");
+                log::warn!("Shutting down");
 
                 // shutdown
                 *data

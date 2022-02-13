@@ -3,7 +3,6 @@ use std::default::Default;
 use std::error::Error;
 use std::fs;
 
-// TODO: custom (de)-serializing
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Config {
     pub port: u32,
