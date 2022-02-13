@@ -1,8 +1,9 @@
 use std::{collections::HashMap, error::Error};
 
+use bitcoin_hashes::hex::ToHex;
 use serde::{Deserialize, Serialize};
 
-use crate::{hashes, utils::arr_to_bi, settings::Settings};
+use crate::{hashes, settings::Settings};
 
 use self::utils::{calculate_mining_reward, is_valid_tx};
 
@@ -382,30 +383,32 @@ impl TxStore {
     }
 
     pub fn get(&self, hash: &[u8; 32], index: &usize) -> Option<&(u128, String)> {
-        self.0.get(&arr_to_bi(hash).to_string())?.get(index)
+        let key = hash.to_hex();
+
+        self.0.get(&key)?.get(index)
     }
 
     pub fn set(&mut self, hash: &[u8; 32], index: usize, utxo: (u128, String)) {
-        let key = &arr_to_bi(hash).to_string();
+        let key = hash.to_hex();
 
-        if self.0.get_mut(key).is_none() {
+        if self.0.get_mut(&key).is_none() {
             self.0.insert(key.clone(), HashMap::new());
         }
 
         self.0
-            .get_mut(key)
+            .get_mut(&key)
             .expect("UNREACHABLE!")
             .insert(index, utxo);
     }
 
     pub fn remove(&mut self, hash: &[u8; 32], index: &usize) {
-        let key = &arr_to_bi(hash).to_string();
+        let key = hash.to_hex();
 
-        if let Some(map) = self.0.get_mut(key) {
+        if let Some(map) = self.0.get_mut(&key) {
             map.remove(index);
 
             if map.len() == 0 {
-                self.0.remove(key);
+                self.0.remove(&key);
             }
         }
     }
