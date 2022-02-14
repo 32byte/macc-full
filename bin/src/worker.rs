@@ -226,11 +226,13 @@ fn add_block(data: &Data, block: Block) {
         .height();
     debug!("Adding new block from miner!");
 
-    // TODO: localhost:port
+    let port = data.config.port;
+    let self_addr = format!("http://127.0.0.1:{}", port);
+
     data.i_blocks
         .write()
         .expect("Couldn't lock i_blocks for writing!")
-        .push(("".to_string(), block_height + 1, block));
+        .push((self_addr, block_height + 1, block));
 }
 
 async fn miner_thread(
