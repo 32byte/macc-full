@@ -2,8 +2,8 @@ use log::{debug, error, info, warn};
 use macc_lib::{
     blockchain::{difficulty, utils, Block, Blockchain, Transaction, TxStore},
     ecdsa::{self, create_rng},
+    rand::{rngs::OsRng, Rng},
     utils::current_time,
-    rand::{Rng, rngs::OsRng}
 };
 
 use crate::types::Shared;
@@ -178,11 +178,7 @@ fn proces_transactions(data: &Data) -> Option<bool> {
 
 fn prepare_transactions(data: &Data, transactions: &mut Vec<Transaction>) -> Option<()> {
     // get block height
-    let block_height = data
-        .blockchain
-        .try_read()
-        .ok()?
-        .height();
+    let block_height = data.blockchain.try_read().ok()?.height();
     // calculate reward
     let reward = utils::calculate_mining_reward(block_height, &data.settings);
     // create lock
@@ -197,11 +193,7 @@ fn prepare_transactions(data: &Data, transactions: &mut Vec<Transaction>) -> Opt
 }
 
 fn add_block(data: &Data, block: Block) -> Option<()> {
-    let block_height = data
-        .blockchain
-        .try_read()
-        .ok()?
-        .height();
+    let block_height = data.blockchain.try_read().ok()?.height();
     debug!("Adding new block from miner!");
 
     let port = data.config.port;
@@ -211,7 +203,7 @@ fn add_block(data: &Data, block: Block) -> Option<()> {
         .write()
         .expect("Couldn't lock i_blocks for writing!")
         .push((self_addr, block_height + 1, block));
-    
+
     Some(())
 }
 
@@ -301,17 +293,9 @@ fn is_miner_running(
         Shared<Option<Block>>,
     ),
 ) -> Option<bool> {
-    let has_task = mining_data
-        .0
-        .try_read()
-        .ok()?
-        .is_some();
+    let has_task = mining_data.0.try_read().ok()?.is_some();
 
-    let has_output = mining_data
-        .1
-        .try_read()
-        .ok()?
-        .is_some();
+    let has_output = mining_data.1.try_read().ok()?.is_some();
 
     Some(has_task && !has_output)
 }
@@ -325,11 +309,7 @@ fn mine(
     rng: &mut OsRng,
 ) -> Option<()> {
     // get task
-    let task = mining_data
-        .0
-        .try_read()
-        .ok()?
-        .clone();
+    let task = mining_data.0.try_read().ok()?.clone();
 
     // check if task exists
     if task.is_none() {
@@ -343,10 +323,7 @@ fn mine(
     let previous = task.1;
     let mut transactions = task.2;
 
-    let mut running = *data
-        .running
-        .try_read()
-        .ok()?;
+    let mut running = *data.running.try_read().ok()?;
 
     // setup for coinbase transactions
     prepare_transactions(&data, &mut transactions);
@@ -389,10 +366,7 @@ fn mine(
         }
 
         // update running
-        running = *data
-            .running
-            .try_read()
-            .ok()?;
+        running = *data.running.try_read().ok()?;
     }
     // block was found
 
@@ -403,7 +377,7 @@ fn mine(
         .1
         .write()
         .expect("Couldn't lock mining_data.1 for writing!") = Some(block);
-    
+
     None
 }
 
