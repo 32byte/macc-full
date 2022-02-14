@@ -1,8 +1,9 @@
 use log::{debug, error, info, warn};
 use macc_lib::{
     blockchain::{difficulty, utils, Block, Blockchain, Transaction, TxStore},
-    ecdsa,
+    ecdsa::{self, create_rng},
     utils::current_time,
+    rand::{Rng, rngs::OsRng}
 };
 
 use crate::types::Shared;
@@ -321,6 +322,7 @@ fn mine(
         Shared<Option<([u8; 32], [u8; 32], Vec<Transaction>)>>,
         Shared<Option<Block>>,
     ),
+    rng: &mut OsRng,
 ) -> Option<()> {
     // get task
     let task = mining_data
@@ -350,8 +352,7 @@ fn mine(
     prepare_transactions(&data, &mut transactions);
 
     // nonce to bruteforce
-    // TODO: start at a random position
-    let mut nonce = 0_u128;
+    let mut nonce = rng.gen::<u128>();
     // setup block
     let mut block = Block {
         // set timestamp
@@ -419,8 +420,10 @@ pub async fn start_miner(
         true
     };
 
+    let mut rng = create_rng().expect("Miner could not create a RNG!");
+
     while running {
-        mine(&data, &mining_data);
+        mine(&data, &mining_data, &mut rng);
 
         std::thread::sleep(std::time::Duration::from_millis(100));
 
