@@ -71,5 +71,39 @@ impl Data {
         }
     }
 
+    pub fn save(&self, path: &str) -> Option<()> {
+        let mut bytes: Vec<u8> = Vec::new();
+
+        bytes.extend(
+            &(bincode::serialize(&(
+                (*self.blockchain.read().ok()?).clone(),
+                (*self.store.read().ok()?).clone(),
+                (*self.difficulty.read().ok()?).clone(),
+            ))
+            .ok()?),
+        );
+
+        std::fs::write(path, bytes).ok()?;
+
+        Some(())
+    }
+
+    pub fn from_file(path: &str, config: Config) -> Option<Self> {
+        let bytes = std::fs::read(path).ok()?;
+
+        let de: (Blockchain, TxStore, [u8; 32]) = bincode::deserialize(&bytes).ok()?;
+
+        Some(Self::new(
+            true,
+            None,
+            config,
+            Some(de.0),
+            Some(de.1),
+            Some(de.2),
+            None,
+            None,
+        ))
+    }
+
     // NICE-TO-HAVE: helper functions for reading / writing since its ugly
 }

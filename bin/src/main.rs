@@ -1,4 +1,5 @@
 use clap::Parser;
+use log::{info, warn};
 use macc_lib::{
     ecdsa::{create_rng, create_secp, pb_key_from_bytes, Client},
     hex::{FromHex, ToHex},
@@ -32,8 +33,13 @@ fn start_node(config: &str) {
         let config = Config::new(config);
 
         // create shared data
-        // TODO: deserialize data
-        let data = Data::new(true, None, config, None, None, None, None, None);
+        let data = if let Some(data) = Data::from_file(&config.data_file, config.clone()) {
+            info!("Loaded node data from file!");
+            data
+        } else {
+            warn!("Failed to load node data, creating new data!");
+            Data::new(true, None, config.clone(), None, None, None, None, None)
+        };
 
         let mining_data = (share(None), share(None));
 
@@ -65,7 +71,9 @@ fn start_node(config: &str) {
             }
         }
 
-        // TODO: serialize and save data
+        data.save(&config.data_file)
+            .expect("Couldn't save node data!");
+        info!("Saved node data to file!");
 
         // save config
         // TODO: handle the modified version probably save somewhere else

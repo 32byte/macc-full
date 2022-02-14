@@ -222,6 +222,7 @@ dependencies = [
 name = "macc"
 version = "0.9.1"
 dependencies = [
+ "bincode",
  "chrono",
  "clap",
  "colored",
