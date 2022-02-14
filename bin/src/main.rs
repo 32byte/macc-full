@@ -14,7 +14,7 @@ mod config;
 use config::Config;
 
 mod types;
-use types::Data;
+use types::{share, Data};
 
 mod args;
 use args::{Args, Command};
@@ -35,8 +35,11 @@ fn start_node(config: &str) {
         // TODO: deserialize data
         let data = Data::new(true, None, config, None, None, None, None, None);
 
+        let mining_data = (share(None), share(None));
+
         // spawn threads
-        let h_worker = tokio::spawn(worker::start(data.clone()));
+        let h_worker = tokio::spawn(worker::start(data.clone(), mining_data.clone()));
+        let h_miner = tokio::spawn(worker::start_miner(data.clone(), mining_data.clone()));
 
         // TODO: server
 
@@ -68,7 +71,7 @@ fn start_node(config: &str) {
         // TODO: handle the modified version probably save somewhere else
         data.config.save().expect("Couldn't save config!");
 
-        let _ = tokio::join!(h_worker);
+        let _ = tokio::join!(h_worker, h_miner);
     });
 }
 
@@ -94,7 +97,10 @@ fn create_transaction(client_json: &str, vin: &str, vout: &str) {
     )
     .expect("Invalid client json!");
 
-    println!("{}", serde_json::to_string(&[("hello".to_string(), 2_usize)]).unwrap());
+    println!(
+        "{}",
+        serde_json::to_string(&[("hello".to_string(), 2_usize)]).unwrap()
+    );
 
     let vin: Vec<(String, usize)> = serde_json::from_str(vin).expect("Couldn't parse input!");
     let vin: Vec<([u8; 32], usize)> = vin
