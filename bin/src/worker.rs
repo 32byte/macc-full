@@ -84,13 +84,14 @@ fn process_blocks(data: &Data) -> Option<bool> {
         }
     }
 
+    // drain the incoming blocks
+    data.i_blocks
+        .write()
+        .expect("Couldn't lock blockchain for writing")
+        .drain(0..blocks_to_process);
+
     if modified {
         debug!("New blocks updated the state, updating it!");
-        // drain the incoming blocks
-        data.i_blocks
-            .write()
-            .expect("Couldn't lock blockchain for writing")
-            .drain(0..blocks_to_process);
         // replace the blockchain
         *data
             .blockchain
@@ -125,20 +126,19 @@ fn process_blocks(data: &Data) -> Option<bool> {
     Some(modified)
 }
 
-fn proces_transactions(data: &Data) -> Option<bool> {
+fn proces_transactions(data: &Data) -> Option<()> {
     // store state
     let i_transactions = data.i_transactions.try_read().ok()?.clone();
 
     let i_transactions_len = i_transactions.len();
     if i_transactions_len == 0 {
         debug!("No transactions to process!");
-        return Some(false);
+        return Some(());
     }
     info!("Processing {} transactions!", i_transactions_len);
 
     let mut mem_transactions = data.mem_transactions.try_read().ok()?.clone();
     let mut mem_store = data.mem_store.try_read().ok()?.clone();
-    let mut modified = false;
 
     // process all transaction
     for tx in i_transactions {
@@ -149,31 +149,27 @@ fn proces_transactions(data: &Data) -> Option<bool> {
             utils::add_tx_to_store(&tx, &mut mem_store);
             // add transaction the the mem transaction
             mem_transactions.push(tx);
-
-            modified = true;
         } else {
             debug!("Invalid transaction found!")
         }
     }
 
     // update state
-    if modified {
-        debug!("New transactions updated the state, updating it!");
-        data.i_transactions
-            .write()
-            .expect("Couldn't lock i_transactions for writing")
-            .drain(0..i_transactions_len);
-        *data
-            .mem_transactions
-            .write()
-            .expect("Couldn't lock mem_transactions for writing") = mem_transactions.clone();
-        *data
-            .mem_store
-            .write()
-            .expect("Couldn't lock mem_store for writing") = mem_store.clone();
-    }
+    debug!("New transactions updated the state, updating it!");
+    data.i_transactions
+        .write()
+        .expect("Couldn't lock i_transactions for writing")
+        .drain(0..i_transactions_len);
+    *data
+        .mem_transactions
+        .write()
+        .expect("Couldn't lock mem_transactions for writing") = mem_transactions.clone();
+    *data
+        .mem_store
+        .write()
+        .expect("Couldn't lock mem_store for writing") = mem_store.clone();
 
-    Some(modified)
+    Some(())
 }
 
 fn prepare_transactions(data: &Data, transactions: &mut Vec<Transaction>) -> Option<()> {

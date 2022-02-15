@@ -5,6 +5,8 @@ use macc_lib::{
     hex::{FromHex, ToHex},
     PublicKey,
 };
+#[macro_use]
+extern crate rocket;
 use tokio::runtime::Runtime;
 use tokio::signal;
 
@@ -21,6 +23,7 @@ mod args;
 use args::{Args, Command};
 
 mod worker;
+mod server;
 
 static LOGGER: CustomLogger = CustomLogger;
 
@@ -46,8 +49,7 @@ fn start_node(config: &str) {
         // spawn threads
         let h_worker = tokio::spawn(worker::start(data.clone(), mining_data.clone()));
         let h_miner = tokio::spawn(worker::start_miner(data.clone(), mining_data.clone()));
-
-        // TODO: server
+        let h_server = tokio::spawn(server::start(data.clone()));
 
         // handle ctrl+c
         match signal::ctrl_c().await {
@@ -79,7 +81,7 @@ fn start_node(config: &str) {
         // TODO: handle the modified version probably save somewhere else
         data.config.save().expect("Couldn't save config!");
 
-        let _ = tokio::join!(h_worker, h_miner);
+        let _ = tokio::join!(h_worker, h_miner, h_server);
     });
 }
 
