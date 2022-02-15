@@ -47,7 +47,7 @@ impl Default for Config {
         Config {
             port: 8033,
             address: "your_address".to_string(),
-            data_file: "node.dat".to_string(),
+            data_file: "node.bin".to_string(),
             trusted_nodes: Vec::new(),
 
             path: "config.json".to_string(),
