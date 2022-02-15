@@ -123,7 +123,7 @@ pub mod utils {
             }
         }
 
-        vin_total >= vout_total
+        vin_total > 0 && vin_total >= vout_total
     }
 
     pub fn add_tx_to_store(tx: &Transaction, store: &mut TxStore) {
