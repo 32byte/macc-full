@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use log::LevelFilter;
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
@@ -28,6 +29,9 @@ pub enum Command {
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 pub struct Args {
+    #[clap(long, help = "Sets the log level")]
+    pub log_level: Option<LevelFilter>,
+
     #[clap(subcommand)]
     pub command: Command,
 }

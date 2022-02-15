@@ -1,5 +1,5 @@
 use clap::Parser;
-use log::{info, warn};
+use log::{info, warn, LevelFilter};
 use macc_lib::{
     ecdsa::{create_rng, create_secp, pb_key_from_bytes, Client},
     hex::{FromHex, ToHex},
@@ -163,7 +163,7 @@ fn main() {
 
     // set my logger
     log::set_logger(&LOGGER)
-        .map(|()| log::set_max_level(log::LevelFilter::Debug))
+        .map(|()| log::set_max_level(args.log_level.unwrap_or(LevelFilter::Info)))
         .expect("Couldn't set the logger!");
 
     match &args.command {

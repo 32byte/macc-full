@@ -50,12 +50,12 @@ fn index() -> &'static str {
 
 pub async fn start(data: Data) {
     // NICE-TO-HAVE: custom loglevel for rocket
-    // let config = rocket::Config {
-    //     log_level: LogLevel::Off,
-    //     ..Default::default()
-    // };
+    let config = rocket::Config {
+        port: data.config.port,
+        ..Default::default()
+    };
 
-    let _ = rocket::build()
+    let _ = rocket::custom(config)
         .mount("/", routes![index])
         .mount("/", routes![get_blockchain, get_block_height, get_tx_store])
         .mount("/", routes![post_transaction, post_block])

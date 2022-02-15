@@ -5,7 +5,7 @@ use std::fs;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Config {
-    pub port: u32,
+    pub port: u16,
     pub address: String,
     pub data_file: String,
     pub trusted_nodes: Vec<String>,
