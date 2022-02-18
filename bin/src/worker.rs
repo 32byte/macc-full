@@ -3,21 +3,21 @@ use macc_lib::{
     blockchain::{difficulty, utils, Block, Blockchain, Transaction, TxStore},
     ecdsa::{self, create_rng},
     rand::{rngs::OsRng, Rng},
-    utils::current_time,
+    utils::current_time, settings::Settings,
 };
 
 use crate::{netio::NetIO, types::Shared};
 
 use super::types::Data;
 
-fn request_blockchain(_node: &str) -> Option<(Blockchain, TxStore, [u8; 32])> {
-    // TODO: implement this
-    // request blockchain
-    // check if blockchain is valid
-    None
+async fn request_blockchain(settings: &Settings, net_client: &NetIO, node: &str) -> Option<(Blockchain, TxStore, [u8; 32])> {
+    let bc = net_client.get_blockchain(node).await?;
+    let (store, diff) = bc.is_valid(settings)?;
+
+    Some((bc, store, diff))
 }
 
-fn process_blocks(data: &Data) -> Option<bool> {
+async fn process_blocks(data: &Data, net_client: &NetIO) -> Option<bool> {
     // clone the blocks which are to process
     let i_blocks = data.i_blocks.try_read().ok()?.clone();
     let blocks_to_process = i_blocks.len();
@@ -62,7 +62,7 @@ fn process_blocks(data: &Data) -> Option<bool> {
                 node
             );
             // request the blockchain from the node
-            if let Some((bc, st, di)) = request_blockchain(&node) {
+            if let Some((bc, st, di)) = request_blockchain(&data.settings, net_client, &node).await {
                 info!(
                     "{} has a bigger blockchain, this blockchain will be replaced!",
                     node
@@ -437,7 +437,7 @@ pub async fn start(
     info!("Starting worker thread!");
 
     while running {
-        let state_modified = if let Some(modified) = process_blocks(&data) {
+        let state_modified = if let Some(modified) = process_blocks(&data, &net_client).await {
             modified
         } else {
             warn!("process blocks failed to lock something!");

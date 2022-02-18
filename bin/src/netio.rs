@@ -5,7 +5,7 @@ use crate::{
     types::{share, Shared},
 };
 
-use macc_lib::blockchain::{Block, Transaction};
+use macc_lib::blockchain::{Block, Transaction, Blockchain};
 use reqwest::Client;
 
 pub struct NetIO {
@@ -17,6 +17,12 @@ impl NetIO {
         Self {
             config: share(config.clone()),
         }
+    }
+
+    async fn get(&self, url: String) -> Option<String>
+    {
+        let res = reqwest::get(url).await.ok()?;
+        res.text().await.ok()
     }
 
     async fn post(client: &Client, url: String, data: String) -> Result<u16, Box<dyn Error>> {
@@ -87,6 +93,13 @@ impl NetIO {
         self.broadcast(endpoint, data);
 
         Ok(())
+    }
+
+    pub async fn get_blockchain(&self, node: &str) -> Option<Blockchain> {
+        let url = format!("http://{}/blockchain", node);
+        let bc_json = self.get(url).await?;
+
+        serde_json::from_str(&bc_json).ok()
     }
 
     pub fn save(&self) -> std::io::Result<()> {
