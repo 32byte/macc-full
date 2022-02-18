@@ -78,6 +78,7 @@ async fn process_blocks(data: &Data, net_client: &NetIO) -> Option<bool> {
             // and the block is valid
 
             info!("{} has sent a new valid block!", node);
+            // TODO: add to node trusted nodes
             blockchain.add(&mut store, block);
             difficulty = diff;
             modified = true;
@@ -433,6 +434,7 @@ pub async fn start(
     };
 
     let net_client = NetIO::new(&data.config);
+    // TODO: sync with trusted
 
     info!("Starting worker thread!");
 

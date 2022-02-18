@@ -58,9 +58,10 @@ impl NetIO {
                         "\"{}\" is not responding or responding faulty, removing..",
                         node
                     );
-                } else {
+                }// else {
+                    // TODO: figure out something clever here
                     valid_nodes.push(node.clone());
-                }
+                //}
             }
 
             (*config.write().expect("Couldn't write nodes!")).trusted_nodes = valid_nodes;
