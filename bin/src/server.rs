@@ -1,8 +1,8 @@
 use std::net::SocketAddr;
 
 use crate::types::Data;
-use macc_lib::blockchain::{Transaction, Block};
-use rocket::{State, serde::json::Json};
+use macc_lib::blockchain::{Block, Transaction};
+use rocket::{serde::json::Json, State};
 
 #[derive(Responder)]
 #[response(status = 200, content_type = "json")]
@@ -26,18 +26,27 @@ fn get_tx_store(data: &State<Data>) -> Option<RawJson> {
     Some(RawJson(json))
 }
 
-
 // POST
-#[post("/transaction", data="<transaction>")]
+#[post("/transaction", data = "<transaction>")]
 fn post_transaction(data: &State<Data>, transaction: Json<Transaction>) -> Option<()> {
     data.i_transactions.write().ok()?.push(transaction.0);
 
     Some(())
 }
 
-#[post("/block?<height>", data="<block>")]
-fn post_block(data: &State<Data>, block: Json<Block>, height: usize, ip_addr: SocketAddr) -> Option<()> {
-    data.i_blocks.write().ok()?.push((ip_addr.to_string(), height, block.0));
+#[post("/block?<height>&<port>", data = "<block>")]
+fn post_block(
+    data: &State<Data>,
+    block: Json<Block>,
+    height: usize,
+    port: String,
+    ip_addr: SocketAddr,
+) -> Option<()> {
+    data.i_blocks.write().ok()?.push((
+        format!("{}:{}", ip_addr.ip().to_string(), port),
+        height,
+        block.0,
+    ));
 
     Some(())
 }

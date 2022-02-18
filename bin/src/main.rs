@@ -22,8 +22,9 @@ use types::{share, Data};
 mod args;
 use args::{Args, Command};
 
-mod worker;
+mod netio;
 mod server;
+mod worker;
 
 static LOGGER: CustomLogger = CustomLogger;
 

@@ -11,7 +11,7 @@ pub struct Config {
     pub trusted_nodes: Vec<String>,
 
     #[serde(skip)]
-    path: String,
+    pub path: String,
 }
 
 impl Config {

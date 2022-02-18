@@ -6,7 +6,7 @@ use macc_lib::{
     utils::current_time,
 };
 
-use crate::types::Shared;
+use crate::{netio::NetIO, types::Shared};
 
 use super::types::Data;
 
@@ -126,7 +126,7 @@ fn process_blocks(data: &Data) -> Option<bool> {
     Some(modified)
 }
 
-fn proces_transactions(data: &Data) -> Option<()> {
+fn proces_transactions(data: &Data, net_client: &NetIO) -> Option<()> {
     // store state
     let i_transactions = data.i_transactions.try_read().ok()?.clone();
 
@@ -145,6 +145,10 @@ fn proces_transactions(data: &Data) -> Option<()> {
         // check if transaction is valid
         if utils::is_valid_tx(&tx, &mem_store) {
             debug!("New valid transaction found!");
+            // broadcast transaction
+            if net_client.b_transaction(&tx).is_err() {
+                error!("Node failed to broadcast transaction!");
+            }
             // add transaction to the mem store
             utils::add_tx_to_store(&tx, &mut mem_store);
             // add transaction the the mem transaction
@@ -210,6 +214,7 @@ fn handle_mining(
         Shared<Option<Block>>,
     ),
     state_modified: bool,
+    net_client: &NetIO,
 ) -> Option<()> {
     let block = mining_data.1.try_read().ok()?.clone();
 
@@ -231,6 +236,11 @@ fn handle_mining(
     // check if miner finished
     if let Some(b) = block {
         info!("Miner has found a new block with the nonce: {}!", b.nonce);
+        // broadcast block
+        let block_height = data.blockchain.try_read().ok()?.height();
+        if net_client.b_block(&b, block_height).is_err() {
+            error!("Node failed to broadcast block!")
+        }
         // push block as incoming
         add_block(data, b);
         // remove task
@@ -422,6 +432,8 @@ pub async fn start(
         true
     };
 
+    let net_client = NetIO::new(&data.config);
+
     info!("Starting worker thread!");
 
     while running {
@@ -432,11 +444,11 @@ pub async fn start(
             false
         };
 
-        if proces_transactions(&data).is_none() {
+        if proces_transactions(&data, &net_client).is_none() {
             warn!("process transactions failed to lock something!");
         }
 
-        handle_mining(&data, &mining_data, state_modified);
+        handle_mining(&data, &mining_data, state_modified, &net_client);
 
         std::thread::sleep(std::time::Duration::from_millis(100));
 
@@ -450,4 +462,7 @@ pub async fn start(
 
     // shutdown requested
     info!("Shutting down worker thread!");
+    if net_client.save().is_err() {
+        error!("The config couldn't be stored!");
+    }
 }

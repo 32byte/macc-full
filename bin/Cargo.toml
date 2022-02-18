@@ -11,6 +11,7 @@ clap = { version = "3.0.14", features = ["derive"] }
 macc_lib = { path = "../lib" }
 serde_json = "1.0.59"
 rocket = { version = "0.5.0-rc.1", features = ["json"] }
+reqwest = "0.11.9"
 bincode = "1.3.3"
 colored = "2.0.0"
 chrono = "0.4.19"
