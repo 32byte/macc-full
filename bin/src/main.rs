@@ -78,10 +78,6 @@ fn start_node(config: &str) {
             .expect("Couldn't save node data!");
         info!("Saved node data to file!");
 
-        // save config
-        // TODO: handle the modified version probably save somewhere else
-        data.config.save().expect("Couldn't save config!");
-
         let _ = tokio::join!(h_worker, h_miner, h_server);
     });
 }

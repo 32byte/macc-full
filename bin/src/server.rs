@@ -53,8 +53,7 @@ fn post_block(
 
 #[get("/")]
 fn index() -> &'static str {
-    // TODO: link to documentation
-    "Hello, World!"
+    "For a list of RESTAPI endpoints checkout https://github.com/32byte/macc-full/blob/master/docs/client-rest-api.md"
 }
 
 pub async fn start(data: Data) {

@@ -462,6 +462,7 @@ pub async fn start(
 
     // shutdown requested
     info!("Shutting down worker thread!");
+    info!("Saving config..");
     if net_client.save().is_err() {
         error!("The config couldn't be stored!");
     }
