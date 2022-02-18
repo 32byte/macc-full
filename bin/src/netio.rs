@@ -1,12 +1,15 @@
 use std::error::Error;
 
-use crate::{types::{Shared, share}, config::Config};
+use crate::{
+    config::Config,
+    types::{share, Shared},
+};
 
 use macc_lib::blockchain::{Block, Transaction};
 use reqwest::Client;
 
 pub struct NetIO {
-    config: Shared<Config>
+    config: Shared<Config>,
 }
 
 impl NetIO {
@@ -32,17 +35,23 @@ impl NetIO {
 
         tokio::spawn(async move {
             let client = Client::new();
-            let nodes = config.read().expect("Couldn't read nodes!").trusted_nodes.clone();
+            let nodes = config
+                .read()
+                .expect("Couldn't read nodes!")
+                .trusted_nodes
+                .clone();
             let mut valid_nodes: Vec<String> = Vec::new();
 
             for (index, node) in nodes.iter().enumerate() {
                 let url = format!("http://{}/{}", node, endpoint);
                 debug!("Requesting {} with index {}", url, index);
-                let status = NetIO::post(&client, url, data.clone())
-                    .await;
+                let status = NetIO::post(&client, url, data.clone()).await;
 
                 if status.unwrap_or(400) != 200 {
-                    warn!("\"{}\" is not responding or responding faulty, removing..", node);
+                    warn!(
+                        "\"{}\" is not responding or responding faulty, removing..",
+                        node
+                    );
                 } else {
                     valid_nodes.push(node.clone());
                 }
@@ -57,7 +66,11 @@ impl NetIO {
 
         let data = serde_json::to_string(block)?;
 
-        let endpoint = format!("block?height={}&port={}", block_height, &self.config.read().expect("Couldn't read config!").port);
+        let endpoint = format!(
+            "block?height={}&port={}",
+            block_height,
+            &self.config.read().expect("Couldn't read config!").port
+        );
 
         self.broadcast(endpoint, data);
 
