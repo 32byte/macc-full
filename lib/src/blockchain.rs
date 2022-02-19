@@ -257,6 +257,10 @@ impl Blockchain {
         &self.0[idx]
     }
 
+    pub fn slice(&self, start: usize, stop: usize) -> &[Block] {
+        &self.0[start..stop]
+    }
+
     pub fn valid_next(
         &self,
         block: &Block,
