@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use crate::types::Data;
 use macc_lib::blockchain::{Block, Transaction};
-use rocket::{serde::json::Json, State};
+use rocket::{serde::json::Json, State, fairing::{Info, Fairing, Kind}, http::Header, Request, Response};
 
 #[derive(Responder)]
 #[response(status = 200, content_type = "json")]
@@ -60,6 +60,25 @@ fn index() -> &'static str {
     "For a list of RESTAPI endpoints checkout https://github.com/32byte/macc-full/blob/master/docs/client-rest-api.md"
 }
 
+pub struct CORS;
+
+#[rocket::async_trait]
+impl Fairing for CORS {
+    fn info(&self) -> Info {
+        Info {
+            name: "Add CORS headers to responses",
+            kind: Kind::Response
+        }
+    }
+
+    async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
+        response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Methods", "POST, GET, PATCH, OPTIONS"));
+        response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
+        response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
+    }
+}
+
 pub async fn start(data: Data) {
     // NICE-TO-HAVE: custom loglevel for rocket
     let config = rocket::Config {
@@ -68,6 +87,7 @@ pub async fn start(data: Data) {
     };
 
     let _ = rocket::custom(config)
+        .attach(CORS)
         .mount("/", routes![index])
         .mount("/", routes![get_blockchain, get_block_height, get_tx_store])
         .mount("/", routes![post_transaction, post_block])

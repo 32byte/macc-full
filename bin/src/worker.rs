@@ -3,14 +3,19 @@ use macc_lib::{
     blockchain::{difficulty, utils, Block, Blockchain, Transaction, TxStore},
     ecdsa::{self, create_rng},
     rand::{rngs::OsRng, Rng},
-    utils::current_time, settings::Settings,
+    settings::Settings,
+    utils::current_time,
 };
 
 use crate::{netio::NetIO, types::Shared};
 
 use super::types::Data;
 
-async fn request_blockchain(settings: &Settings, net_client: &NetIO, node: &str) -> Option<(Blockchain, TxStore, [u8; 32])> {
+async fn request_blockchain(
+    settings: &Settings,
+    net_client: &NetIO,
+    node: &str,
+) -> Option<(Blockchain, TxStore, [u8; 32])> {
     let bc = net_client.get_blockchain(node).await?;
     let (store, diff) = bc.is_valid(settings)?;
 
@@ -62,7 +67,8 @@ async fn process_blocks(data: &Data, net_client: &NetIO) -> Option<bool> {
                 node
             );
             // request the blockchain from the node
-            if let Some((bc, st, di)) = request_blockchain(&data.settings, net_client, &node).await {
+            if let Some((bc, st, di)) = request_blockchain(&data.settings, net_client, &node).await
+            {
                 info!(
                     "{} has a bigger blockchain, this blockchain will be replaced!",
                     node

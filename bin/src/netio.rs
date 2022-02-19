@@ -5,7 +5,7 @@ use crate::{
     types::{share, Shared},
 };
 
-use macc_lib::blockchain::{Block, Transaction, Blockchain};
+use macc_lib::blockchain::{Block, Blockchain, Transaction};
 use reqwest::Client;
 
 pub struct NetIO {
@@ -19,8 +19,7 @@ impl NetIO {
         }
     }
 
-    async fn get(&self, url: String) -> Option<String>
-    {
+    async fn get(&self, url: String) -> Option<String> {
         let res = reqwest::get(url).await.ok()?;
         res.text().await.ok()
     }
@@ -58,9 +57,9 @@ impl NetIO {
                         "\"{}\" is not responding or responding faulty, removing..",
                         node
                     );
-                }// else {
-                    // TODO: figure out something clever here
-                    valid_nodes.push(node.clone());
+                } // else {
+                  // TODO: figure out something clever here
+                valid_nodes.push(node.clone());
                 //}
             }
 
