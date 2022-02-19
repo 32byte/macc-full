@@ -8,6 +8,8 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 wasm-bindgen = "0.2.63"
+macc_lib = { path = "../../lib" }
+serde_json = "1.0.59"
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.
