@@ -4,10 +4,10 @@ use rand::rngs::OsRng;
 use secp256k1::ecdsa::Signature;
 use secp256k1::rand;
 use secp256k1::{All, Message, PublicKey, Secp256k1, SecretKey};
-use serde::Serialize;
+use serde::de::{self, Deserialize, Deserializer, MapAccess, SeqAccess, Visitor};
 use serde::ser::SerializeStruct;
+use serde::Serialize;
 use std::error::Error;
-use serde::de::{self, Deserialize, Deserializer, Visitor, SeqAccess, MapAccess};
 use std::fmt;
 
 use crate::blockchain::utils::hash_utxou;
@@ -37,13 +37,14 @@ pub struct Client {
 impl Serialize for Client {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-            S: serde::Serializer {
+        S: serde::Serializer,
+    {
         let mut state = serializer.serialize_struct("Client", 3)?;
 
         state.serialize_field("sk_key", &self.sk_key.serialize_secret().to_hex())?;
         state.serialize_field("pb_key", &self.pb_key.to_hex())?;
         state.serialize_field("nonce", &self.nonce)?;
-        
+
         state.end()
     }
 }
@@ -54,7 +55,11 @@ impl<'de> Deserialize<'de> for Client {
         D: Deserializer<'de>,
     {
         #[allow(non_camel_case_types)]
-        enum Field { Sk_Key, Pb_Key, Nonce }
+        enum Field {
+            Sk_Key,
+            Pb_Key,
+            Nonce,
+        }
 
         impl<'de> Deserialize<'de> for Field {
             fn deserialize<D>(deserializer: D) -> Result<Field, D::Error>
@@ -100,11 +105,14 @@ impl<'de> Deserialize<'de> for Client {
             where
                 V: SeqAccess<'de>,
             {
-                let sk_key = seq.next_element()?
+                let sk_key = seq
+                    .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(0, &self))?;
-                let pb_key = seq.next_element()?
+                let pb_key = seq
+                    .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(1, &self))?;
-                let nonce = seq.next_element()?
+                let nonce = seq
+                    .next_element()?
                     .ok_or_else(|| de::Error::invalid_length(2, &self))?;
                 Ok(Client::new(sk_key, pb_key, nonce).expect("sk_key or pb_key are wrong!"))
             }
@@ -156,6 +164,19 @@ impl Client {
             sk_key: sk_key_from_bytes(&Vec::from_hex(&sk_key)?)?,
             pb_key: pb_key_from_bytes(&Vec::from_hex(&pb_key)?)?,
             nonce,
+        })
+    }
+
+    pub fn from_sk_key(sk_key: String) -> Result<Self, Box<dyn Error>> {
+        let secp = create_secp();
+
+        let sk_key = sk_key_from_bytes(&Vec::from_hex(&sk_key)?)?;
+        let pb_key = PublicKey::from_secret_key(&secp, &sk_key);
+
+        Ok(Self {
+            sk_key,
+            pb_key,
+            nonce: 0,
         })
     }
 

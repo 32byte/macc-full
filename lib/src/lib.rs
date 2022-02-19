@@ -1,7 +1,7 @@
 // library re-exports
 pub use bitcoin_hashes::hex;
-pub use secp256k1::{Secp256k1, All, PublicKey, SecretKey};
 pub use secp256k1::rand;
+pub use secp256k1::{All, PublicKey, Secp256k1, SecretKey};
 
 // module exports
 pub mod blockchain;

@@ -1,9 +1,13 @@
-use std::{collections::HashMap, error::Error};
+use std::{collections::HashMap, error::Error, vec};
 
-use bitcoin_hashes::hex::ToHex;
+use bitcoin_hashes::hex::{FromHex, ToHex};
 use serde::{Deserialize, Serialize};
 
-use crate::{hashes, settings::Settings};
+use crate::{
+    ecdsa::{create_secp, Client},
+    hashes,
+    settings::Settings,
+};
 
 use self::utils::{calculate_mining_reward, is_valid_tx};
 
@@ -14,7 +18,7 @@ use self::utils::{calculate_mining_reward, is_valid_tx};
 // https://stackoverflow.com/questions/67087597/is-it-possible-to-use-rusts-log-info-for-tests
 // #[cfg(not(test))]
 // Use log crate when building application
-use log::debug; 
+use log::debug;
 // #[cfg(test)]
 // use std::{println as debug}; // Workaround to use prinltn! for logs.
 
@@ -80,6 +84,7 @@ pub mod difficulty {
 pub mod utils {
     use std::error::Error;
 
+    use crate::ecdsa::msg_from_str;
     use crate::hex::ToHex;
     use crate::settings::Settings;
     use crate::{hashes, script};
@@ -104,9 +109,15 @@ pub mod utils {
             if let Some((value, lock)) = store.get(hash, index) {
                 // check if utxou is hashable
                 if let Ok(utxou_hash) = hash_utxou((hash, index)) {
+                    let message = msg_from_str(&utxou_hash.to_hex());
                     // validate script
-                    if script::eval(format!("{} {} {}", solution, utxou_hash.to_hex(), lock))
-                        .is_none()
+                    if script::eval(format!(
+                        "{} {} {}",
+                        solution,
+                        message.as_ref().to_hex(),
+                        lock
+                    ))
+                    .is_none()
                     {
                         debug!("Invalid solution!");
                         return false;
@@ -261,7 +272,7 @@ impl Blockchain {
         if start > stop || stop > self.height() {
             return None;
         }
-        
+
         Some(&self.0[start..stop])
     }
 
@@ -428,5 +439,27 @@ impl TxStore {
                 self.0.remove(&key);
             }
         }
+    }
+
+    pub fn get_owned(&self, sk_key: String) -> Option<(u128, Vec<(String, usize, u128)>)> {
+        let secp = create_secp();
+        let mut client = Client::from_sk_key(sk_key).ok()?;
+
+        let mut transactions: Vec<(String, usize, u128)> = Vec::new();
+        let mut balance: u128 = 0;
+
+        for (tx_hash, utxos) in &self.0 {
+            for (index, (value, _lock)) in utxos {
+                let tx_hash_vec = Vec::from_hex(tx_hash).ok()?.try_into().ok()?;
+                let tx = client.create_transaction(&secp, vec![(tx_hash_vec, *index)], vec![])?;
+
+                if is_valid_tx(&tx, self) {
+                    balance += value;
+                    transactions.push((tx_hash.clone(), *index, *value));
+                }
+            }
+        }
+
+        Some((balance, transactions))
     }
 }
