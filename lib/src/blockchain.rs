@@ -257,8 +257,12 @@ impl Blockchain {
         &self.0[idx]
     }
 
-    pub fn slice(&self, start: usize, stop: usize) -> &[Block] {
-        &self.0[start..stop]
+    pub fn slice(&self, start: usize, stop: usize) -> Option<&[Block]> {
+        if start > stop || stop > self.height() {
+            return None;
+        }
+        
+        Some(&self.0[start..stop])
     }
 
     pub fn valid_next(
