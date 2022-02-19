@@ -1,0 +1,13 @@
+{
+  "name": "macc-bindings",
+  "version": "0.1.0",
+  "files": [
+    "macc_bindings_bg.wasm",
+    "macc_bindings.js",
+    "macc_bindings_bg.js",
+    "macc_bindings.d.ts"
+  ],
+  "module": "macc_bindings.js",
+  "types": "macc_bindings.d.ts",
+  "sideEffects": false
+}
