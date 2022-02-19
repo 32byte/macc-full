@@ -9,9 +9,13 @@ use rocket::{serde::json::Json, State};
 struct RawJson(String);
 
 // GET
-#[get("/blockchain")]
-fn get_blockchain(data: &State<Data>) -> Option<RawJson> {
-    let json = serde_json::to_string(&*data.blockchain.read().ok()?).ok()?;
+#[get("/blockchain?<start>&<stop>")]
+fn get_blockchain(data: &State<Data>, start: Option<usize>, stop: Option<usize>) -> Option<RawJson> {
+    let blockchain = &*data.blockchain.read().ok()?;
+    let start = start.unwrap_or(0);
+    let stop = stop.unwrap_or(blockchain.height());
+
+    let json = serde_json::to_string(blockchain.slice(start, stop)).ok()?;
     Some(RawJson(json))
 }
 
