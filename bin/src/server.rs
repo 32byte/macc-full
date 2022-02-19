@@ -15,7 +15,7 @@ fn get_blockchain(data: &State<Data>, start: Option<usize>, stop: Option<usize>)
     let start = start.unwrap_or(0);
     let stop = stop.unwrap_or(blockchain.height());
 
-    let json = serde_json::to_string(blockchain.slice(start, stop)).ok()?;
+    let json = serde_json::to_string(blockchain.slice(start, stop)?).ok()?;
     Some(RawJson(json))
 }
 
