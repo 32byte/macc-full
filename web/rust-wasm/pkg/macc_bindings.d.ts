@@ -41,3 +41,8 @@ export function block_hash(block_str: string): string | undefined;
 * @returns {string | undefined}
 */
 export function get_tx(blockchain_str: string, hash_str: string): string | undefined;
+/**
+* @param {string} sk_key
+* @returns {string | undefined}
+*/
+export function get_client(sk_key: string): string | undefined;

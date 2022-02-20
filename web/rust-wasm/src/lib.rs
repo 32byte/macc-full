@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use macc_lib::{hex::{ToHex, FromHex}, settings::Settings, blockchain::{utils, Transaction, TxStore, Block, Blockchain}};
+use macc_lib::{hex::{ToHex, FromHex}, settings::Settings, blockchain::{utils, Transaction, TxStore, Block, Blockchain}, ecdsa::{Client, pb_key_to_addr}};
 
 // utils
 
@@ -56,6 +56,16 @@ pub fn get_tx(blockchain_str: String, hash_str: String) -> Option<String> {
     let found = bc.get_transaction(&hash)?;
 
     Some(serde_json::to_string(&found).ok()?)
+}
+
+#[wasm_bindgen]
+pub fn get_client(sk_key: String) -> Option<String> {
+    let client = Client::from_sk_key(sk_key.clone()).ok()?;
+
+    let pb_key = client.pb_key.to_hex();
+    let addr = pb_key_to_addr(&client.pb_key.serialize());
+
+    Some(serde_json::to_string(&(sk_key, pb_key, addr)).ok()?)
 }
 
 // Wallet
