@@ -35,3 +35,9 @@ export function tx_vin_total(tx_str: string, store_str: string): string | undefi
 * @returns {string | undefined}
 */
 export function block_hash(block_str: string): string | undefined;
+/**
+* @param {string} blockchain_str
+* @param {string} hash_str
+* @returns {string | undefined}
+*/
+export function get_tx(blockchain_str: string, hash_str: string): string | undefined;

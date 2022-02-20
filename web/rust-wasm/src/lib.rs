@@ -1,5 +1,5 @@
 use wasm_bindgen::prelude::*;
-use macc_lib::{hex::ToHex, settings::Settings, blockchain::{utils, Transaction, TxStore, Block}};
+use macc_lib::{hex::ToHex, settings::Settings, blockchain::{utils, Transaction, TxStore, Block, Blockchain}};
 
 // utils
 
@@ -46,6 +46,16 @@ pub fn block_hash(block_str: String) -> Option<String> {
     let block: Block = serde_json::from_str(&block_str).ok()?;
 
     Some(block.hash(None).ok()?.to_hex())
+}
+
+#[wasm_bindgen]
+pub fn get_tx(blockchain_str: String, hash_str: String) -> Option<String> {
+    let bc: Blockchain = serde_json::from_str(&blockchain_str).ok()?;
+    let hash: [u8; 32] = serde_json::from_str(&hash_str).ok()?;
+
+    let tx: Transaction = bc.get_transaction(&hash)?;
+
+    Some(serde_json::to_string(&tx).ok()?)
 }
 
 // Wallet
