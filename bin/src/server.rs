@@ -3,6 +3,7 @@ use std::net::SocketAddr;
 use crate::types::Data;
 use macc_lib::blockchain::{Block, Transaction};
 use rocket::{serde::json::Json, State, fairing::{Info, Fairing, Kind}, http::Header, Request, Response};
+use local_ip_address::local_ip;
 
 #[derive(Responder)]
 #[response(status = 200, content_type = "json")]
@@ -82,6 +83,7 @@ impl Fairing for CORS {
 pub async fn start(data: Data) {
     // NICE-TO-HAVE: custom loglevel for rocket
     let config = rocket::Config {
+        address: local_ip().expect("Couldnt' get local ip!"),
         port: data.config.port,
         ..Default::default()
     };
