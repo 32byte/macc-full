@@ -46,3 +46,9 @@ export function get_tx(blockchain_str: string, hash_str: string): string | undef
 * @returns {string | undefined}
 */
 export function get_client(sk_key: string): string | undefined;
+/**
+* @param {string} store_str
+* @param {string} sk_key
+* @returns {string | undefined}
+*/
+export function my_utxos(store_str: string, sk_key: string): string | undefined;

@@ -58,6 +58,8 @@ pub fn get_tx(blockchain_str: String, hash_str: String) -> Option<String> {
     Some(serde_json::to_string(&found).ok()?)
 }
 
+// Wallet
+
 #[wasm_bindgen]
 pub fn get_client(sk_key: String) -> Option<String> {
     let client = Client::from_sk_key(sk_key.clone()).ok()?;
@@ -68,8 +70,6 @@ pub fn get_client(sk_key: String) -> Option<String> {
     Some(serde_json::to_string(&(sk_key, pb_key, addr)).ok()?)
 }
 
-// Wallet
-/*
 #[wasm_bindgen]
 pub fn my_utxos(store_str: String, sk_key: String) -> Option<String> {
     let store: TxStore = serde_json::from_str(&store_str).ok()?;
@@ -77,4 +77,3 @@ pub fn my_utxos(store_str: String, sk_key: String) -> Option<String> {
 
     Some(serde_json::to_string(&owned).ok()?)
 }
- */
