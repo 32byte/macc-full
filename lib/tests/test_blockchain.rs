@@ -135,7 +135,7 @@ mod tests {
         // send the amount = reward to my account
         // vout: vec![(reward / 2, my_client_lock), (reward - (reward / 2), miner_client_lock)]
         // };
-        // let tx_hash = tx.hash()?;
+        let tx_hash = tx.hash()?;
         // add tx to block
         b.transactions.push(tx);
 
@@ -154,7 +154,9 @@ mod tests {
         // add block
 
         bc.add(&mut store, b);
-
+        
+        assert!(bc.get_transaction(&tx_hash).is_some());
+        
         assert!(bc.is_valid(&settings).is_some());
 
         let (balance, _txs) = store

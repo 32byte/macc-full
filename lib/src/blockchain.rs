@@ -400,6 +400,20 @@ impl Blockchain {
 
         Some((store, difficulty))
     }
+
+    pub fn get_transaction(&self, hash: &[u8; 32]) -> Option<Transaction> {
+        for block in &self.0 {
+            for tx in &block.transactions {
+                if let Ok(tx_hash) = tx.hash() {
+                    if &tx_hash == hash {
+                        return Some(tx.clone());
+                    }
+                }
+            }
+        }
+
+        None
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
