@@ -53,9 +53,9 @@ pub fn get_tx(blockchain_str: String, hash_str: String) -> Option<String> {
     let bc: Blockchain = serde_json::from_str(&blockchain_str).ok()?;
     let hash: [u8; 32] = Vec::from_hex(&hash_str).ok()?.try_into().ok()?;
 
-    let tx: Transaction = bc.get_transaction(&hash)?;
+    let found = bc.get_transaction(&hash)?;
 
-    Some(serde_json::to_string(&tx).ok()?)
+    Some(serde_json::to_string(&found).ok()?)
 }
 
 // Wallet
