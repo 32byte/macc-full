@@ -11,7 +11,7 @@ This project contains the code for the complete cryptocurrency and a frontend ap
 
 [py](py/README.md) - Python library for `lib` and a wallet implementation (WARNING: python library is outdated)
 
-[www](www/README.md) - ReactJS Frontend for the node, has an explorer, wallet and faucet
+[web](web/README.md) - ReactJS Frontend for the node, has an explorer, wallet and faucet
 
 
 ## Requirements

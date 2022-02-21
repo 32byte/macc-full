@@ -1,7 +1,0 @@
-/node_modules
-/target
-/build
-/dist
-/pkg
-
-Cargo.lock
