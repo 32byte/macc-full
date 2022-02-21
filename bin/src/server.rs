@@ -1,7 +1,6 @@
 use std::net::{SocketAddr, IpAddr, Ipv4Addr};
 
 use crate::types::Data;
-use local_ip_address::local_ip;
 use macc_lib::blockchain::{Block, Transaction};
 use rocket::{
     fairing::{Fairing, Info, Kind},
