@@ -52,3 +52,11 @@ export function get_client(sk_key: string): string | undefined;
 * @returns {string | undefined}
 */
 export function my_utxos(store_str: string, addr: string): string | undefined;
+/**
+* @param {string} owned_str
+* @param {string} sk_key
+* @param {string} addr
+* @param {string} amount_str
+* @returns {string | undefined}
+*/
+export function send(owned_str: string, sk_key: string, addr: string, amount_str: string): string | undefined;
