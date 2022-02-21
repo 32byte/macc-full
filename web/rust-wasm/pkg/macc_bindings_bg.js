@@ -291,15 +291,15 @@ export function get_client(sk_key) {
 
 /**
 * @param {string} store_str
-* @param {string} sk_key
+* @param {string} addr
 * @returns {string | undefined}
 */
-export function my_utxos(store_str, sk_key) {
+export function my_utxos(store_str, addr) {
     try {
         const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
         var ptr0 = passStringToWasm0(store_str, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         var len0 = WASM_VECTOR_LEN;
-        var ptr1 = passStringToWasm0(sk_key, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        var ptr1 = passStringToWasm0(addr, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
         var len1 = WASM_VECTOR_LEN;
         wasm.my_utxos(retptr, ptr0, len0, ptr1, len1);
         var r0 = getInt32Memory0()[retptr / 4 + 0];

@@ -71,9 +71,9 @@ pub fn get_client(sk_key: String) -> Option<String> {
 }
 
 #[wasm_bindgen]
-pub fn my_utxos(store_str: String, sk_key: String) -> Option<String> {
+pub fn my_utxos(store_str: String, addr: String) -> Option<String> {
     let store: TxStore = serde_json::from_str(&store_str).ok()?;
-    let owned = store.get_owned(sk_key)?;
+    let owned = store.get_owned_fast(addr)?;
 
     Some(serde_json::to_string(&owned).ok()?)
 }
