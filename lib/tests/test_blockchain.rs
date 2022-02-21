@@ -154,9 +154,9 @@ mod tests {
         // add block
 
         bc.add(&mut store, b);
-        
+
         assert!(bc.get_transaction(&tx_hash).is_some());
-        
+
         assert!(bc.is_valid(&settings).is_some());
 
         let (balance, _txs) = store
@@ -165,15 +165,50 @@ mod tests {
 
         assert_eq!(balance, 50000);
 
-        let (balance, _txs) = store
+        let (balance, utxos) = store
             .get_owned(miner_client.sk_key.serialize_secret().to_hex())
             .expect("Couldn't get owned transactions");
 
+        let (f_balance, _) = store
+            .get_owned_fast(pb_key_to_addr(&miner_client.pb_key.serialize()))
+            .expect("Couldn't get owned fast!");
+
         assert_eq!(balance, 50000);
-
-        let (f_balance, _) = store.get_owned_fast(pb_key_to_addr(&miner_client.pb_key.serialize())).expect("Couldn't get owned fast!");
-
         assert_eq!(balance, f_balance);
+
+        let tx = generate_transaction(
+            (balance, utxos),
+            miner_client.sk_key.serialize_secret().to_hex(),
+            pb_key_to_addr(&my_client.pb_key.serialize()),
+            1000,
+        )
+        .expect("Couldnt generate transaction!");
+
+        let mut b = Block {
+            timestamp: current_time(),
+            previous: bc.at(-1).hash(None)?,
+            nonce: 0,
+            transactions: vec![tx],
+        };
+        // find & set nonce for block
+        b.nonce = find_nonce(&b, &diff)?;
+
+        // check if block can be added
+
+        // calculate difficulty for the block
+        diff = bc.adjust_difficulty(diff, &settings);
+        // check if block can be added
+        let can_be_added = bc.valid_next(&b, &store, &diff, &settings).unwrap_or(false);
+
+        assert!(can_be_added);
+
+        bc.add(&mut store, b);
+
+        let (bal, _) = store
+            .get_owned_fast(pb_key_to_addr(&miner_client.pb_key.serialize()))
+            .expect("Couldn't get owned fast!");
+
+        assert_eq!(bal, 50000 - 1000);
 
         Ok(())
     }

@@ -325,3 +325,44 @@ pub fn create_solution(secp: &Secp256k1<All>, client: &Client, message: &Message
     // standart solution format for the lock
     format!("{} {}", pb_key_hex, sig_hex)
 }
+
+pub fn generate_transaction(
+    owned: (u128, Vec<(String, usize, u128)>),
+    sk_key: String,
+    addr: String,
+    amount: u128,
+) -> Option<Transaction> {
+    let mut client = Client::from_sk_key(sk_key).ok()?;
+
+    if amount > owned.0 {
+        return None;
+    }
+
+    let mut sending = 0_u128;
+    let mut input: Vec<([u8; 32], usize)> = Vec::new();
+    let mut i = 0_usize;
+
+    while sending < amount {
+        let hash: [u8; 32] = Vec::from_hex(&owned.1[i].0).ok()?.try_into().ok()?;
+        let index: usize = owned.1[i].1;
+        let value: u128 = owned.1[i].2;
+
+        sending += value;
+        input.push((hash, index));
+
+        i += 1;
+    }
+
+    let change = sending - amount;
+    let mut output: Vec<(u128, String)> = Vec::new();
+    // send to addr
+    output.push((amount, addr));
+    // send change to self
+    if change > 0 {
+        output.push((change, pb_key_to_addr(&client.pb_key.serialize())));
+    }
+
+    let secp = create_secp();
+    let tx: Transaction = client.create_transaction_addr(&secp, input, output)?;
+    Some(tx)
+}
