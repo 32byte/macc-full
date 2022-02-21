@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::net::{SocketAddr, IpAddr, Ipv4Addr};
 
 use crate::types::Data;
 use local_ip_address::local_ip;
@@ -95,7 +95,7 @@ impl Fairing for CORS {
 pub async fn start(data: Data) {
     // NICE-TO-HAVE: custom loglevel for rocket
     let config = rocket::Config {
-        address: local_ip().expect("Couldnt' get local ip!"),
+        address: IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)),
         port: data.config.port,
         ..Default::default()
     };

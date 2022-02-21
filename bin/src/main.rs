@@ -53,26 +53,32 @@ fn start_node(config: &str) {
         let h_server = tokio::spawn(server::start(data.clone()));
 
         // handle ctrl+c
-        match signal::ctrl_c().await {
-            Ok(()) => {
-                log::warn!("Shutting down");
+        let datac = data.clone();
 
-                // shutdown
-                *data
-                    .running
-                    .write()
-                    .expect("Couldn't lock running for writing!") = false;
-            }
-            Err(_) => {
-                log::error!("Shutting down");
-
-                // shutdown
-                *data
-                    .running
-                    .write()
-                    .expect("Couldn't lock running for writing!") = false;
-            }
-        }
+        ctrlc::set_handler(move || {
+            log::warn!("Shutting down");
+            *datac.running.write().expect("Couldn't write running") = false;
+        }).expect("Couldn't setup ctrl+c handler!");
+        // match signal::ctrl_c().await {
+        //     Ok(()) => {
+        //         log::warn!("Shutting down");
+// 
+        //         // shutdown
+        //         *data
+        //             .running
+        //             .write()
+        //             .expect("Couldn't lock running for writing!") = false;
+        //     }
+        //     Err(_) => {
+        //         log::error!("Shutting down");
+// 
+        //         // shutdown
+        //         *data
+        //             .running
+        //             .write()
+        //             .expect("Couldn't lock running for writing!") = false;
+        //     }
+        // }
 
         data.save(&config.data_file)
             .expect("Couldn't save node data!");
