@@ -200,6 +200,24 @@ impl Client {
         input: Vec<([u8; 32], usize)>,
         output: Vec<(u128, PublicKey)>,
     ) -> Option<Transaction> {
+        let vout: Vec<(u128, String)> = output
+            .iter()
+            .map(|(amount, receiver)| {
+                let addr = pb_key_to_addr(&receiver.serialize());
+
+                (*amount, addr)
+            })
+            .collect();
+
+        self.create_transaction_addr(secp, input, vout)
+    }
+
+    pub fn create_transaction_addr(
+        &mut self,
+        secp: &Secp256k1<All>,
+        input: Vec<([u8; 32], usize)>,
+        output: Vec<(u128, String)>,
+    ) -> Option<Transaction> {
         // for each input create a solution
         let vin: Vec<([u8; 32], usize, String)> = input
             .iter()
@@ -222,7 +240,7 @@ impl Client {
         let vout: Vec<(u128, String)> = output
             .iter()
             .map(|(amount, receiver)| {
-                let lock = create_lock(receiver);
+                let lock = create_lock_with_addr(receiver);
 
                 (*amount, lock)
             })
