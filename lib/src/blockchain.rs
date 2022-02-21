@@ -476,4 +476,20 @@ impl TxStore {
 
         Some((balance, transactions))
     }
+
+    pub fn get_owned_fast(&self, address: String) -> Option<(u128, Vec<(String, usize, u128)>)> {
+        let mut transactions: Vec<(String, usize, u128)> = Vec::new();
+        let mut balance: u128 = 0;
+
+        for (tx_hash, utxos) in &self.0 {
+            for (index, (value, lock)) in utxos {
+                if lock.contains(&address) {
+                    balance += value;
+                    transactions.push((tx_hash.clone(), *index, *value));
+                }
+            }
+        }
+
+        Some((balance, transactions))
+    }
 }

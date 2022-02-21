@@ -171,6 +171,10 @@ mod tests {
 
         assert_eq!(balance, 50000);
 
+        let (f_balance, _) = store.get_owned_fast(pb_key_to_addr(&miner_client.pb_key.serialize())).expect("Couldn't get owned fast!");
+
+        assert_eq!(balance, f_balance);
+
         Ok(())
     }
 }
