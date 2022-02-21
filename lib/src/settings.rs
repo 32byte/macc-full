@@ -49,8 +49,8 @@ impl Default for Settings {
             adjustment_interval: 30,
             precision: 5,
 
-            halvings_interval: 10_000,
-            start_mining_reward: 100_u128 * 10_u32.pow(crypto_precision) as u128,
+            halvings_interval: 43_200,
+            start_mining_reward: 3000_u128 * 10_u32.pow(crypto_precision) as u128,
 
             crypto_precision,
             start_difficulty: difficulty::create(1).expect("UNREACHABLE"),
