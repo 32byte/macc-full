@@ -1,6 +1,6 @@
 import { useRouter } from "next/router"
 import { useState, useEffect } from "react";
-import Settings from "../components/settings";
+import Settings from "../../components/settings";
 
 function Loading() {
     return (

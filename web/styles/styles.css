@@ -1,0 +1,247 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100&display=swap');
+
+* {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+.header {
+    width: 100vw;
+    height: 68px;
+
+    background-color: #32302F;
+    display: flex;
+}
+  
+.header > .link {
+    margin: 30px;
+    margin-top: auto;
+    text-align: center;
+}
+
+.header > .link > a {
+    text-align: center;
+    vertical-align: middle;
+    line-height: 68px;
+}
+
+.logo {
+    padding-left: 0px;
+}
+
+.route-link-text {
+    font-size: 42px;
+    font-family: 'Roboto';
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    color: #FBF1C7;
+}
+
+/*
+.align-right {
+    margin-left: auto;
+    padding-right: 20px;
+}
+*/
+
+
+.content {
+    width: 100vw;
+    min-height: calc(100vh - 68px);
+
+    background-color: #282828;
+    justify-content: center;
+    display: flex;
+}
+
+.content > div {
+    display: block;
+    padding-top: 80px;
+    padding-bottom: 80px;
+}
+
+.data > .yes {
+    width: 80vw;
+    display: flex;
+    padding-top: 20px;
+}
+
+.data > div {
+    width: 80vw;
+}
+
+.content > div > .data {
+    padding: 30px;
+
+    background-color: #3C3836;
+
+    border-radius: 10px;
+    border: 2px solid #3C3836;
+}
+
+.data > p,a {
+    color: #FBF1C7;
+
+    font-size: 2vw;
+    font-family: 'Roboto';
+}
+
+.data > h1 {
+    color: #FBF1C7;
+
+    font-size: max(18px, 2vw);
+    font-family: 'Roboto';
+}
+
+.data > div > h1 {
+    color: #d6cda8;
+
+    font-size: 1.8vw;
+    font-family: 'Roboto';
+}
+
+.data > div > p > a {
+    color: #d6cda8;
+    font-style: italic;
+    font-size: 1vw;
+    font-family: 'Roboto';
+}
+
+.data > div, a > p {
+    color: #d6cda8;
+    font-style: italic;
+    font-size: 1vw;
+    font-family: 'Roboto';
+}
+
+.data > .link {
+    text-decoration: underline;
+}
+
+.data > div > input {
+    flex: 1;
+    height: 60px;
+    color: #FBF1C7;
+    background-color: #282828;
+    padding-left: 20px;
+
+    font-size: 2vw;
+    font-family: 'Roboto';
+
+    border-radius: 50px 0 0 50px;
+    border: 2px solid #282828;
+}
+
+.data > div > input::placeholder {
+    color: #fbf1c79c;
+}
+
+.data > div > input:focus {
+    outline: none;
+}
+
+.data > div > button {
+    padding-left: 7px;
+    padding-right: 15px;
+
+    color: #FBF1C7;
+    background-color: #282828;
+
+    font-size: 2vw;
+    font-family: 'Roboto';
+
+    border-radius: 0 50px 50px 0;
+    border: 2px solid #282828;
+}
+
+.data > div > button:hover {
+    background-color: #534e4b;
+}
+
+.data > div > button:active {
+    background-color: #6d6662;
+}
+
+.wallet {
+    padding: 30px;
+
+    background-color: #3C3836;
+
+    border-radius: 10px;
+    border: 2px solid #3C3836;
+}
+
+.wallet .flex {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.wallet .flex > h1 {
+    color: #d6cda8;
+
+    font-size: 1.8vw;
+    font-family: 'Roboto';
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.wallet button {
+    padding-left: 7px;
+    padding-right: 15px;
+
+    color: #FBF1C7;
+    background-color: #282828;
+
+    font-size: 2vw;
+    font-family: 'Roboto';
+    border: 2px solid #282828;
+}
+
+.wallet button:hover {
+    background-color: #534e4b;
+}
+
+.wallet button:active {
+    background-color: #6d6662;
+}
+
+.wallet input {
+    flex: 1;
+    color: #FBF1C7;
+    background-color: #282828;
+    padding-left: 20px;
+
+    font-size: 2vw;
+    font-family: 'Roboto';
+
+    border: 2px solid #282828;
+}
+
+.wallet input::placeholder {
+    color: #fbf1c79c;
+}
+
+.wallet input:focus {
+    outline: none;
+}
+
+.wallet p {
+    color: #d6cda8;
+
+    font-size: 1.8vw;
+    font-family: 'Roboto';
+}
+
+/* Mobile: */
+@media screen and (max-width: 580px) {
+    .logo {
+        display: none !important;
+    }
+
+    .header > div {
+        flex: 1;
+    }
+}
