@@ -13,6 +13,11 @@ pub enum Command {
         save: Option<String>,
     },
 
+    GetAddress {
+        #[clap(short, long, help = "The Public key in hex format")]
+        pb_key: String,
+    },
+
     CreateTransaction {
         #[clap(short, long, help = "Path to the client json")]
         client_json: String,

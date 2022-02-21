@@ -1,9 +1,14 @@
 use std::net::SocketAddr;
 
 use crate::types::Data;
-use macc_lib::blockchain::{Block, Transaction};
-use rocket::{serde::json::Json, State, fairing::{Info, Fairing, Kind}, http::Header, Request, Response};
 use local_ip_address::local_ip;
+use macc_lib::blockchain::{Block, Transaction};
+use rocket::{
+    fairing::{Fairing, Info, Kind},
+    http::Header,
+    serde::json::Json,
+    Request, Response, State,
+};
 
 #[derive(Responder)]
 #[response(status = 200, content_type = "json")]
@@ -11,7 +16,11 @@ struct RawJson(String);
 
 // GET
 #[get("/blockchain?<start>&<stop>")]
-fn get_blockchain(data: &State<Data>, start: Option<usize>, stop: Option<usize>) -> Option<RawJson> {
+fn get_blockchain(
+    data: &State<Data>,
+    start: Option<usize>,
+    stop: Option<usize>,
+) -> Option<RawJson> {
     let blockchain = &*data.blockchain.read().ok()?;
     let start = start.unwrap_or(0);
     let stop = stop.unwrap_or(blockchain.height());
@@ -68,13 +77,16 @@ impl Fairing for CORS {
     fn info(&self) -> Info {
         Info {
             name: "Add CORS headers to responses",
-            kind: Kind::Response
+            kind: Kind::Response,
         }
     }
 
     async fn on_response<'r>(&self, _request: &'r Request<'_>, response: &mut Response<'r>) {
         response.set_header(Header::new("Access-Control-Allow-Origin", "*"));
-        response.set_header(Header::new("Access-Control-Allow-Methods", "POST, GET, PATCH, OPTIONS"));
+        response.set_header(Header::new(
+            "Access-Control-Allow-Methods",
+            "POST, GET, PATCH, OPTIONS",
+        ));
         response.set_header(Header::new("Access-Control-Allow-Headers", "*"));
         response.set_header(Header::new("Access-Control-Allow-Credentials", "true"));
     }

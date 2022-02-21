@@ -1,7 +1,7 @@
 use clap::Parser;
 use log::{info, warn, LevelFilter};
 use macc_lib::{
-    ecdsa::{create_rng, create_secp, pb_key_from_bytes, Client},
+    ecdsa::{create_rng, create_secp, pb_key_from_bytes, Client, pb_key_to_addr},
     hex::{FromHex, ToHex},
     PublicKey,
 };
@@ -155,6 +155,15 @@ fn create_transaction(client_json: &str, vin: &str, vout: &str) {
     .expect("Couldn't update client json");
 }
 
+fn get_address(pb_key: &str) {
+    let pb_key: PublicKey =
+        pb_key_from_bytes(&Vec::from_hex(pb_key).expect("Public key isn't in hex format!"))
+            .expect("Couldn't deserialize Public key!");
+    
+    let addr = pb_key_to_addr(&pb_key.serialize());
+    println!("{}", addr);
+}
+
 fn main() {
     let args = Args::parse();
 
@@ -166,6 +175,7 @@ fn main() {
     match &args.command {
         Command::RunNode { config } => start_node(config),
         Command::GenerateClientJson { save } => generate_client_json(save),
+        Command::GetAddress { pb_key } => get_address(&pb_key),
         Command::CreateTransaction {
             client_json,
             vin,
