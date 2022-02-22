@@ -105,15 +105,24 @@ export default function Wallet() {
 
         setCookies('sk', sk);
         setSk(sk);
+        window.location.reload(false);
     }
 
     const createWallet = () => {
         let sk = randomBytes(32).toString('hex');
         setCookies('sk', sk);
         setSk(sk);
+        window.location.reload(false);
     }
 
-    if (sk && !client) setClient(get_client(sk));
+    if (sk && !client) {
+        let c = get_client(sk);
+        if (!c) {
+            setCookies('sk', '');
+            return <Error />
+        }
+        setClient(c);
+    };
 
     return (
         <div className="content">
